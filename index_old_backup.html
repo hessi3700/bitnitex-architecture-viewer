@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arnitex Backend Architecture</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0e1a;
+      color: #e1e8f0;
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: #0f1419;
+      border-right: 1px solid #1c2433;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #1c2433;
+    }
+
+    .sidebar-header h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      color: #8b92a7;
+    }
+
+    .nav-section {
+      padding: 16px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      padding: 0 8px;
+    }
+
+    .nav-item {
+      padding: 10px 12px;
+      margin: 2px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #9ca3af;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-item:hover {
+      background: #1a1f2e;
+      color: #e1e8f0;
+    }
+
+    .nav-item.active {
+      background: #1e3a5f;
+      color: #60a5fa;
+      font-weight: 500;
+    }
+
+    .nav-item .icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .toolbar {
+      background: #0f1419;
+      border-bottom: 1px solid #1c2433;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .toolbar-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e1e8f0;
+      flex: 1;
+    }
+
+    .toolbar-btn {
+      padding: 8px 16px;
+      border: 1px solid #1c2433;
+      background: #151b26;
+      color: #9ca3af;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-btn:hover {
+      background: #1a1f2e;
+      color: #e1e8f0;
+      border-color: #2a3441;
+    }
+
+    .toolbar-btn.active {
+      background: #1e3a5f;
+      color: #60a5fa;
+      border-color: #2d5a8f;
+    }
+
+    .diagram-container {
+      flex: 1;
+      padding: 24px;
+      overflow: auto;
+      position: relative;
+    }
+
+    .diagram-wrapper {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      transition: transform 0.3s ease;
+    }
+
+    .mermaid {
+      background: #0f1419;
+      border: 1px solid #1c2433;
+      border-radius: 8px;
+      padding: 32px;
+      min-width: 800px;
+    }
+
+    /* Zoom controls */
+    .zoom-controls {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0f1419;
+      border: 1px solid #1c2433;
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      background: #151b26;
+      color: #9ca3af;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .zoom-btn:hover {
+      background: #1a1f2e;
+      color: #e1e8f0;
+    }
+
+    .zoom-level {
+      text-align: center;
+      font-size: 11px;
+      color: #6b7280;
+      padding: 4px 0;
+    }
+
+    /* Info panel */
+    .info-panel {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      width: 320px;
+      background: #0f1419;
+      border: 1px solid #1c2433;
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: none;
+    }
+
+    .info-panel.visible {
+      display: block;
+    }
+
+    .info-panel h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e1e8f0;
+      margin-bottom: 12px;
+    }
+
+    .info-panel p {
+      font-size: 12px;
+      color: #9ca3af;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .stat-card {
+      background: #151b26;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #1c2433;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    /* Loading state */
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a0e1a;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #1c2433;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2a3441;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>🏗️ Arnitex Backend</h1>
+        <p>System Architecture</p>
+      </div>
+      
+      <nav class="nav-section">
+        <div class="nav-section-title">Views</div>
+        <div class="nav-item active" data-view="full">
+          <span>📊</span> Full System Overview
+        </div>
+        <div class="nav-item" data-view="controllers">
+          <span>🎛️</span> Controllers Layer
+        </div>
+        <div class="nav-item" data-view="services">
+          <span>⚙️</span> Services Layer
+        </div>
+        <div class="nav-item" data-view="database">
+          <span>🗄️</span> Database Schema
+        </div>
+        <div class="nav-item" data-view="flows">
+          <span>🔄</span> Key Flows
+        </div>
+      </nav>
+
+      <nav class="nav-section">
+        <div class="nav-section-title">Components</div>
+        <div class="nav-item" data-info="controllers">
+          <span>📡</span> REST Controllers (25+)
+        </div>
+        <div class="nav-item" data-info="services">
+          <span>🔧</span> Business Services (140+)
+        </div>
+        <div class="nav-item" data-info="database">
+          <span>💾</span> Database Tables (81)
+        </div>
+        <div class="nav-item" data-info="external">
+          <span>🌐</span> External Integrations
+        </div>
+      </nav>
+
+      <div style="padding: 16px; margin-top: auto; border-top: 1px solid #1c2433;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Controllers</div>
+            <div class="stat-value">25</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Services</div>
+            <div class="stat-value">140+</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tables</div>
+            <div class="stat-value">81</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Endpoints</div>
+            <div class="stat-value">200+</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <div class="toolbar">
+        <div class="toolbar-title">Full System Architecture</div>
+        <button class="toolbar-btn" id="zoomFit">
+          <span>📐</span> Fit to Screen
+        </button>
+        <button class="toolbar-btn" id="toggleInfo">
+          <span>ℹ️</span> Info
+        </button>
+        <button class="toolbar-btn" id="fullscreen">
+          <span>⛶</span> Fullscreen
+        </button>
+      </div>
+
+      <div class="diagram-container" id="diagramContainer">
+        <div class="diagram-wrapper" id="diagramWrapper">
+          <div class="loading">Loading diagram...</div>
+        </div>
+      </div>
+
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoomIn">+</button>
+        <div class="zoom-level" id="zoomLevel">100%</div>
+        <button class="zoom-btn" id="zoomOut">−</button>
+        <button class="zoom-btn" id="zoomReset" title="Reset Zoom">⟲</button>
+      </div>
+    </main>
+
+    <!-- Info panel -->
+    <div class="info-panel" id="infoPanel">
+      <h3>System Overview</h3>
+      <p>Arnitex is a comprehensive cryptocurrency exchange platform built with Spring Boot.</p>
+      <p><strong>Key Features:</strong></p>
+      <p>• P2P Trading (Limit, Market, Stop orders)</p>
+      <p>• OTC Exchange</p>
+      <p>• Multi-chain wallet support</p>
+      <p>• Fiat on/off-ramps (multiple payment gateways)</p>
+      <p>• KYC via FinnoTech & Jibit</p>
+      <p>• Admin panel & support ticketing</p>
+      <p>• Referral & gift code system</p>
+    </div>
+  </div>
+
+  <!-- Mermaid CDN -->
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ 
+      startOnLoad: true, 
+      theme: "dark",
+      flowchart: {
+        useMaxWidth: false,
+        htmlLabels: true,
+        curve: 'basis'
+      }
+    });
+
+    const diagrams = {
+      full: `
+flowchart TB
+  subgraph Clients[" 🌐 External Clients "]
+    UI[Web UI]
+    ATM[ATM Device]
+    Gateway[Payment Gateways]
+    Webhook[Webhooks]
+  end
+
+  subgraph Security[" 🔐 Security Layer "]
+    JWT[JWT Util]
+    AuthMgr[Auth Manager]
+  end
+
+  subgraph Controllers[" 🎛️ REST Controllers "]
+    AdminC[Admin]
+    UsersC[Customer]
+    OrdersC[Orders]
+    TradesC[Trades]
+    WalletC[Wallets]
+    MarketC[Markets]
+  end
+
+  subgraph Services[" ⚙️ Business Services "]
+    OrderS[OrderService]
+    WalletS[WalletService]
+    CustomerS[CustomerService]
+    TradeS[TradeService]
+    PaymentGW[Payment Gateways]
+    ApieS[Blockchain Provider]
+  end
+
+  subgraph Database[" 💾 Database "]
+    OrderT[(orders)]
+    TradeT[(trades)]
+    WalletT[(wallets)]
+    UserT[(customers)]
+    BalanceT[(balances)]
+  end
+
+  UI --> Controllers
+  ATM --> Controllers
+  Gateway --> Controllers
+  Controllers --> Security
+  Security --> Services
+  Services --> Database
+  Services --> ApieS
+  Services --> PaymentGW
+`,
+      controllers: `
+flowchart TB
+  subgraph Public[" 🌍 Public Endpoints "]
+    Health[HealthController<br/>GET /api/health]
+    Blog[BlogController<br/>GET/POST /api/blog]
+    Country[CountryController<br/>GET /api/country]
+  end
+
+  subgraph Auth[" 🔑 Authentication "]
+    Register[POST /api/users/register]
+    Login[POST /api/users/login]
+    LoginOTP[POST /api/users/login-with-otp]
+    CheckOTP[POST /api/users/check-otp-code]
+    GoogleSSO[GET /api/users/google-sso]
+  end
+
+  subgraph Trading[" 💹 Trading Endpoints "]
+    BuyOrder[POST /api/orders/buy]
+    SellOrder[POST /api/orders/sell]
+    CancelOrder[DELETE /api/orders]
+    OrderBook[GET /api/orders/order-book]
+    Trades[GET /api/trades]
+  end
+
+  subgraph Wallets[" 💰 Wallet Operations "]
+    CreateWallet[POST /api/wallets]
+    GenAddress[POST /api/wallets/generate-address]
+    Withdraw[POST /api/wallets/withdrawal-request]
+    Deposit[POST /api/wallets/deposit]
+    Balance[GET /api/wallets/balance]
+  end
+
+  subgraph Admin[" 👨‍💼 Admin Panel "]
+    AdminLogin[POST /api/admins/login]
+    ManageUsers[GET/PUT /api/users]
+    ManageOrders[GET/PUT /api/orders/admin]
+    ManageRoles[POST /api/roles]
+  end
+`,
+      services: `
+flowchart LR
+  subgraph Trading[" 💹 Trading Services "]
+    OrderS[OrderService<br/>- Create orders<br/>- Cancel orders<br/>- Order book<br/>- Validation]
+    TradeS[TradeService<br/>- Execute trades<br/>- Trade history<br/>- Volume stats]
+    MarketS[MarketService<br/>- Market CRUD<br/>- Activation]
+    ExchangeS[ExchangeService<br/>- OTC exchange<br/>- Price calc<br/>- Fees]
+  end
+
+  subgraph Wallet[" 💰 Wallet & Blockchain "]
+    WalletS[WalletService<br/>- HD/Account wallets<br/>- Addresses<br/>- Transactions<br/>- Withdrawals]
+    ApieS[ApieService<br/>- On-chain ops<br/>- Multi-chain<br/>- Confirmations]
+    DepositS[DepositService<br/>- Track deposits]
+    WithdrawS[WithdrawalService<br/>- Process withdrawals]
+  end
+
+  subgraph Identity[" 👤 Identity & KYC "]
+    CustomerS[CustomerService<br/>- Profile mgmt<br/>- Auth flows<br/>- KYC status]
+    FinoTechS[FinoTechService<br/>- National ID<br/>- Bank validation<br/>- SMS auth]
+    JibitS[JibitService<br/>- IBAN/Card checks<br/>- Identity matching]
+  end
+
+  subgraph Payment[" 💳 Fiat Payments "]
+    PaymentGW[Payment Gateways<br/>- Vandar<br/>- Jibit<br/>- NextPay<br/>- Sadad<br/>- Zarinpal]
+    TomanTxS[TomanTransactionService<br/>- IRR transactions]
+  end
+
+  OrderS --> WalletS
+  OrderS --> TradeS
+  WalletS --> ApieS
+  WalletS --> DepositS
+  WalletS --> WithdrawS
+  CustomerS --> FinoTechS
+  CustomerS --> JibitS
+  DepositS --> PaymentGW
+  WithdrawS --> PaymentGW
+`,
+      database: `
+flowchart TB
+  subgraph Identity[" 👥 Identity & Access "]
+    Role[(ROLE<br/>PRIVILEGE<br/>roles_privileges)]
+    Users[(customers<br/>admins<br/>login_histories)]
+    KYC[(finno_tech_validation<br/>bank_accounts<br/>credit_card)]
+  end
+
+  subgraph Assets[" 🪙 Assets & Markets "]
+    Coins[(COIN_ENTITY<br/>CRYPTO_NETWORK<br/>coin_network_junction)]
+    Markets[(markets<br/>exchange_setting<br/>tether_price)]
+  end
+
+  subgraph Trading[" 📈 Trading Data "]
+    Orders[(orders<br/>- amount<br/>- unit_price<br/>- status<br/>- type<br/>- executed_%)]
+    Trades[(trades<br/>- amount<br/>- price<br/>- timestamp)]
+  end
+
+  subgraph Wallets[" 💼 Wallets & Balances "]
+    HDWallet[(hd_wallet<br/>hd_wallet_address<br/>wallet_transactions)]
+    CustomerWallet[(customer_wallet<br/>- p2p_credit<br/>- p2p_blocked<br/>- total_balance)]
+    Transactions[(ethereum_transaction<br/>tron_transactions<br/>internal_transaction)]
+  end
+
+  subgraph Finance[" 💵 Deposits & Withdrawals "]
+    Deposits[(deposit_requests<br/>toman_transactions<br/>vandar_token)]
+    Withdrawals[(withdrawal_requests)]
+  end
+
+  subgraph Content[" 📝 Content & Support "]
+    CMS[(blog<br/>faq<br/>user_manual<br/>message)]
+    Support[(ticket<br/>notifications<br/>alarm)]
+  end
+
+  Orders --> Trades
+  Orders --> CustomerWallet
+  Trades --> CustomerWallet
+  Users --> CustomerWallet
+  Users --> HDWallet
+  Deposits --> CustomerWallet
+  Withdrawals --> CustomerWallet
+  Markets --> Orders
+  Coins --> Markets
+`,
+      flows: `
+flowchart TB
+  subgraph OrderFlow[" 📊 Order Placement Flow "]
+    O1[User submits order] --> O2[Validate DTO]
+    O2 --> O3[Check market active]
+    O3 --> O4[Validate unit price ±10%]
+    O4 --> O5[Lock funds in customer_wallet<br/>p2p_blocked_credit]
+    O5 --> O6[Create order row<br/>status: IS_OPEN]
+    O6 --> O7[Send to matching engine]
+    O7 --> O8{Match found?}
+    O8 -->|Yes| O9[Create trade<br/>Update executed_%<br/>Transfer balances]
+    O8 -->|No| O10[Order stays in book]
+  end
+
+  subgraph WithdrawFlow[" 💸 Withdrawal Flow "]
+    W1[User creates withdrawal request] --> W2[Check min/max limits]
+    W2 --> W3[Send OTP]
+    W3 --> W4[User confirms OTP]
+    W4 --> W5[Admin approves<br/>or auto-approved]
+    W5 --> W6[Create on-chain tx<br/>via ApieService]
+    W6 --> W7[Update withdrawal_requests<br/>status: COMPLETED]
+    W7 --> W8[Deduct from customer_wallet]
+  end
+
+  subgraph DepositFlow[" 💰 Deposit Flow (Fiat) "]
+    D1[User initiates deposit] --> D2[Create deposit_request<br/>with gateway]
+    D2 --> D3[Redirect to gateway<br/>Vandar/Jibit/etc]
+    D3 --> D4[User pays]
+    D4 --> D5[Gateway callback<br/>to /api/vandar/redirect]
+    D5 --> D6[Update deposit status]
+    D6 --> D7[Credit customer_wallet<br/>p2p_credit]
+    D7 --> D8[Send notification]
+  end
+
+  subgraph KYCFlow[" 🔍 KYC Verification Flow "]
+    K1[User submits profile] --> K2{Country = Iran?}
+    K2 -->|Yes| K3[Use Jibit or FinnoTech<br/>based on setting]
+    K2 -->|No| K9[Skip KYC]
+    K3 --> K4[Match IBAN with card]
+    K4 --> K5[Validate NID + birthdate]
+    K5 --> K6[Check name similarity]
+    K6 --> K7[Store in finno_tech_validation]
+    K7 --> K8[Admin reviews & approves]
+    K8 --> K9[Update customer status<br/>AUTHORIZED]
+  end
+`
+    };
+
+    let currentZoom = 1;
+    let currentView = 'full';
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDiagram('full');
+      setupEventListeners();
+    });
+
+    function loadDiagram(view) {
+      currentView = view;
+      const wrapper = document.getElementById('diagramWrapper');
+      wrapper.innerHTML = '<div class="loading">Rendering diagram...</div>';
+      
+      setTimeout(() => {
+        const diagramCode = diagrams[view];
+        const mermaidDiv = document.createElement('div');
+        mermaidDiv.className = 'mermaid';
+        mermaidDiv.textContent = diagramCode;
+        wrapper.innerHTML = '';
+        wrapper.appendChild(mermaidDiv);
+        
+        mermaid.init(undefined, mermaidDiv);
+      }, 100);
+
+      // Update toolbar title
+      const titles = {
+        full: 'Full System Architecture',
+        controllers: 'Controllers Layer',
+        services: 'Services Layer',
+        database: 'Database Schema',
+        flows: 'Key System Flows'
+      };
+      document.querySelector('.toolbar-title').textContent = titles[view];
+    }
+
+    function setupEventListeners() {
+      // Navigation
+      document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+          loadDiagram(item.dataset.view);
+          resetZoom();
+        });
+      });
+
+      // Zoom controls
+      const wrapper = document.getElementById('diagramWrapper');
+      document.getElementById('zoomIn').addEventListener('click', () => {
+        currentZoom = Math.min(currentZoom + 0.2, 3);
+        updateZoom();
+      });
+
+      document.getElementById('zoomOut').addEventListener('click', () => {
+        currentZoom = Math.max(currentZoom - 0.2, 0.3);
+        updateZoom();
+      });
+
+      document.getElementById('zoomReset').addEventListener('click', resetZoom);
+
+      document.getElementById('zoomFit').addEventListener('click', () => {
+        currentZoom = 1;
+        updateZoom();
+        document.getElementById('diagramContainer').scrollTo({
+          top: 0,
+          left: 0,
+          behavior: 'smooth'
+        });
+      });
+
+      // Info toggle
+      document.getElementById('toggleInfo').addEventListener('click', () => {
+        document.getElementById('infoPanel').classList.toggle('visible');
+      });
+
+      // Fullscreen
+      document.getElementById('fullscreen').addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      });
+
+      // Mouse wheel zoom
+      const container = document.getElementById('diagramContainer');
+      container.addEventListener('wheel', (e) => {
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          currentZoom = Math.max(0.3, Math.min(3, currentZoom + delta));
+          updateZoom();
+        }
+      }, { passive: false });
+
+      // Pan with mouse drag
+      let isDragging = false;
+      let startX, startY, scrollLeft, scrollTop;
+
+      container.addEventListener('mousedown', (e) => {
+        if (e.button === 0 && e.target === container) {
+          isDragging = true;
+          startX = e.pageX - container.offsetLeft;
+          startY = e.pageY - container.offsetTop;
+          scrollLeft = container.scrollLeft;
+          scrollTop = container.scrollTop;
+          container.style.cursor = 'grabbing';
+        }
+      });
+
+      container.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - container.offsetLeft;
+        const y = e.pageY - container.offsetTop;
+        const walkX = (x - startX) * 1.5;
+        const walkY = (y - startY) * 1.5;
+        container.scrollLeft = scrollLeft - walkX;
+        container.scrollTop = scrollTop - walkY;
+      });
+
+      container.addEventListener('mouseup', () => {
+        isDragging = false;
+        container.style.cursor = 'default';
+      });
+
+      container.addEventListener('mouseleave', () => {
+        isDragging = false;
+        container.style.cursor = 'default';
+      });
+    }
+
+    function updateZoom() {
+      const wrapper = document.getElementById('diagramWrapper');
+      wrapper.style.transform = `scale(${currentZoom})`;
+      document.getElementById('zoomLevel').textContent = Math.round(currentZoom * 100) + '%';
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      updateZoom();
+    }
+  </script>
+</body>
+</html>
