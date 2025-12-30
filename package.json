@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Interactive architecture diagram viewer and project tracker for BitniTex",
   "private": true,
-  "homepage": "https://yourusername.github.io/bitnitex",
+  "homepage": "https://hessi3700.github.io/bitnitex-architecture-viewer",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
