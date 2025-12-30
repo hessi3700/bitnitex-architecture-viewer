@@ -120,4 +120,3 @@ If deployment fails:
 ---
 
 **You're all set! 🎉 Ready to deploy to GitHub Pages!**
-

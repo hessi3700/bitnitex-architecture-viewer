@@ -215,16 +215,27 @@ const TodoPanel = () => {
   if (!showTodoPanel) return null
 
   const progress = getProgress()
-  // Only show Level tasks (the 30 main tasks) - filter out old hidden tasks
-  const filteredTasks = Object.values(tasks).filter(task => {
-    // Only show tasks that start with "Level" (the 30 main tasks)
-    if (!task || !task.id || !task.id.startsWith('Level')) return false
-    if (filterStatus && task.status !== filterStatus) return false
-    if (filterCategory && task.category !== filterCategory) return false
-    return true
-  })
+  // Only show Level tasks (the 60 main tasks) - filter out old hidden tasks
+  const filteredTasks = Object.values(tasks)
+    .filter(task => {
+      // Only show tasks that start with "Level" (the 60 main tasks)
+      if (!task || !task.id || !task.id.startsWith('Level')) return false
+      if (filterStatus && task.status !== filterStatus) return false
+      if (filterCategory && task.category !== filterCategory) return false
+      return true
+    })
+    .sort((a, b) => {
+      // Extract level number from task ID (e.g., "Level1_ProjectSetup" -> 1, "Level42_MultiSignatureWallets" -> 42)
+      const getLevelNumber = (taskId) => {
+        const match = taskId.match(/^Level(\d+)_/)
+        return match ? parseInt(match[1], 10) : 999
+      }
+      const levelA = getLevelNumber(a.id)
+      const levelB = getLevelNumber(b.id)
+      return levelA - levelB
+    })
 
-  // Only show categories from Level tasks (the 30 main tasks) - filter out old hidden tasks
+  // Only show categories from Level tasks (the 60 main tasks) - filter out old hidden tasks
   const categories = [...new Set(Object.values(tasks)
     .filter(t => t && t.id && t.id.startsWith('Level') && t.category)
     .map(t => t.category))]
@@ -446,20 +457,31 @@ const TodoPanel = () => {
               {filteredTasks.filter(t => t && t.id).map(task => {
                 const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0
                 const totalSubtasks = task.subtasks?.length || 0
+                const isMissing = task.isMissing === true || task.isMissing === 'true' || task.isMissing === 1
 
                 return (
                   <div
                     key={task.id}
-                    className={`todo-task-item ${selectedTask === task.id ? 'active' : ''}`}
+                    className={`todo-task-item ${selectedTask === task.id ? 'active' : ''} ${isMissing ? 'missing-task' : ''}`}
                     onClick={() => setSelectedTask(task.id)}
+                    style={isMissing ? {
+                      borderLeft: '4px solid #a855f7',
+                      backgroundColor: 'rgba(168, 85, 247, 0.05)'
+                    } : {}}
                   >
                     <div className="task-item-header">
                       <div 
                         className="task-status-indicator" 
-                        style={{ backgroundColor: getStatusColor(task.status) }}
+                        style={{ 
+                          backgroundColor: isMissing ? '#a855f7' : getStatusColor(task.status),
+                          border: isMissing ? '2px dashed #a855f7' : 'none'
+                        }}
                       />
                       <div className="task-item-content">
-                        <h4>{task.title}</h4>
+                        <h4>
+                          {task.title}
+                          {isMissing && <span className="missing-badge" title="Advanced Component - Not in original Java codebase">🚀 ADVANCED</span>}
+                        </h4>
                         <div className="task-item-meta">
                           <span className="task-category">{task.category}</span>
                           <span 

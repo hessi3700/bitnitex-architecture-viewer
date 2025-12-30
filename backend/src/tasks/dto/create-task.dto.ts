@@ -35,5 +35,17 @@ export class CreateTaskDto {
   @IsArray()
   @IsOptional()
   dependencies?: string[]
+
+  @IsString()
+  @IsOptional()
+  priority?: string
+
+  @IsString()
+  @IsOptional()
+  category?: string
+
+  @IsOptional()
+  isMissing?: boolean
 }
+
 

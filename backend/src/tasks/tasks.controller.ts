@@ -49,5 +49,11 @@ export class TasksController {
   seedTasks(@Body() tasks: CreateTaskDto[]) {
     return this.tasksService.seedTasks(tasks)
   }
+
+  @Post('seed-all')
+  @HttpCode(HttpStatus.CREATED)
+  seedAllTasks() {
+    return this.tasksService.seedAllLevelTasks()
+  }
 }
 

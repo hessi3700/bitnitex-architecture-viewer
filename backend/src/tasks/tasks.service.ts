@@ -145,7 +145,31 @@ export class TasksService {
     return { created, skipped }
   }
 
+  async seedAllLevelTasks(): Promise<{ created: number; skipped: number; message: string }> {
+    // Check if tasks already exist
+    const existingTasks = await this.tasksRepository.find({
+      where: { nodeId: () => "nodeId LIKE 'Level%'" }
+    })
+    
+    if (existingTasks.length > 0) {
+      return { 
+        created: 0, 
+        skipped: existingTasks.length, 
+        message: `Tasks already exist in database (${existingTasks.length} Level tasks). Use POST /api/tasks/seed with task data to add new tasks.` 
+      }
+    }
+    
+    // Return message that tasks need to be seeded via the seed endpoint
+    // The frontend will call this, but we need the actual task data
+    return {
+      created: 0,
+      skipped: 0,
+      message: 'No tasks in database. Please seed tasks using POST /api/tasks/seed with task data, or ensure tasks are seeded on first load.'
+    }
+  }
+
   private transformTask(task: Task): any {
+    // Parse subtasks from JSON string
     let subtasks = []
     let dependencies = []
     
@@ -221,6 +245,9 @@ export class TasksService {
       actualHours: task.actualHours,
       subtasks,
       dependencies,
+      priority: task.priority || null,
+      category: task.category || null,
+      isMissing: task.isMissing || false,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
     }

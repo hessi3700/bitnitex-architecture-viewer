@@ -22,11 +22,30 @@ export const getStatusColor = (status) => {
   }
 }
 
-// Generate mermaid style for a node based on status
-export const generateNodeStyle = (nodeId, status) => {
+// Generate mermaid style for a node based on status and advanced flag
+export const generateNodeStyle = (nodeId, status, isMissing = false) => {
   const color = getStatusColor(status)
   let fill = '#1e3a5f'
+
+  // Advanced components get different colors (purple/orange theme)
+  if (isMissing) {
+    switch (status) {
+      case TaskStatus.COMPLETED:
+        fill = '#581c87' // dark purple
+        break
+      case TaskStatus.IN_PROGRESS:
+        fill = '#7c2d12' // dark orange
+        break
+      case TaskStatus.BLOCKED:
+        fill = '#7f1d1d' // dark red
+        break
+      default:
+        fill = '#4c1d95' // purple for missing components
+    }
+    return `style ${nodeId} fill:${fill},stroke:#a855f7,stroke-width:4px,stroke-dasharray: 5 5,color:#e1e8f0`
+  }
   
+  // Regular components
   switch (status) {
     case TaskStatus.COMPLETED:
       fill = '#064e3b' // dark green
@@ -105,7 +124,9 @@ export const enhanceDiagramWithStatus = (baseCode, tasks, savedDiagram = null) =
       if (newCode !== enhancedCode) {
         enhancedCode = newCode
         // Add style ONLY if we found the node
-        let styleLine = generateNodeStyle(nodeId, task.status)
+        // Check if task is advanced component
+        const isMissing = task.isMissing === true || task.isMissing === 'true' || task.isMissing === 1
+        let styleLine = generateNodeStyle(nodeId, task.status, isMissing)
         // Add lock styling if node is locked
         if (lockedNodes.has(nodeId)) {
           styleLine = styleLine.replace(/stroke-width:(\d+)px/, 'stroke-width:$1px,stroke-dasharray:5,5')

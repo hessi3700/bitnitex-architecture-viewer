@@ -440,6 +440,167 @@ export const nodeDetails = {
       'COIN_ENTITY.id → customer_wallet.currency_id'
     ],
     tags: ['Balance', 'Wallet', 'Core']
+  },
+
+  // ========== MISSING COMPONENTS (Levels 31-60) ==========
+  
+  // Level 31: Margin Trading
+  MarginTrading: {
+    id: 'MarginTrading',
+    type: 'service',
+    title: 'Margin Trading System',
+    icon: '🚀',
+    description: 'Margin trading with leverage, margin calls, liquidation engine, and position management. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/margin/accounts', description: 'Create margin account', auth: 'USER' },
+      { method: 'POST', path: '/api/margin/positions', description: 'Open position', auth: 'USER' },
+      { method: 'GET', path: '/api/margin/positions', description: 'Get positions', auth: 'USER' },
+      { method: 'POST', path: '/api/margin/close', description: 'Close position', auth: 'USER' }
+    ],
+    services: ['MarginService', 'LiquidationService'],
+    tags: ['Missing', 'Advanced Trading', 'Margin', 'Leverage']
+  },
+
+  // Level 32: Futures & Perpetual
+  FuturesPerpetual: {
+    id: 'FuturesPerpetual',
+    type: 'service',
+    title: 'Futures & Perpetual Contracts',
+    icon: '🚀',
+    description: 'Futures and perpetual swap contracts with funding rates and mark prices. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'GET', path: '/api/futures/contracts', description: 'List contracts' },
+      { method: 'POST', path: '/api/futures/positions', description: 'Open futures position', auth: 'USER' },
+      { method: 'GET', path: '/api/futures/funding-rate', description: 'Get funding rate' }
+    ],
+    services: ['FuturesService', 'PerpetualService', 'FundingRateService'],
+    tags: ['Missing', 'Advanced Trading', 'Futures', 'Perpetual']
+  },
+
+  // Level 33: Options Trading
+  OptionsTrading: {
+    id: 'OptionsTrading',
+    type: 'service',
+    title: 'Options Trading System',
+    icon: '🚀',
+    description: 'Options trading with Black-Scholes pricing and Greeks calculation. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'GET', path: '/api/options/chains', description: 'Get options chain' },
+      { method: 'POST', path: '/api/options/positions', description: 'Open options position', auth: 'USER' },
+      { method: 'POST', path: '/api/options/exercise', description: 'Exercise option', auth: 'USER' }
+    ],
+    services: ['OptionsService', 'BlackScholesService', 'GreeksService'],
+    tags: ['Missing', 'Advanced Trading', 'Options', 'Derivatives']
+  },
+
+  // Level 36: AML Monitoring
+  AMLMonitoring: {
+    id: 'AMLMonitoring',
+    type: 'service',
+    title: 'AML Transaction Monitoring',
+    icon: '🚀',
+    description: 'Anti-Money Laundering transaction monitoring with pattern detection and SAR. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/aml/monitor', description: 'Monitor transaction', auth: 'ADMIN' },
+      { method: 'GET', path: '/api/aml/sar', description: 'Get SAR reports', auth: 'ADMIN' },
+      { method: 'POST', path: '/api/aml/risk-score', description: 'Calculate risk score', auth: 'ADMIN' }
+    ],
+    services: ['AMLService', 'TransactionMonitoringService', 'SARService'],
+    tags: ['Missing', 'Compliance', 'AML', 'Risk']
+  },
+
+  // Level 37: Sanctions Screening
+  SanctionsScreening: {
+    id: 'SanctionsScreening',
+    type: 'service',
+    title: 'Sanctions Screening System',
+    icon: '🚀',
+    description: 'Sanctions screening against OFAC, EU, and UN lists. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/sanctions/screen', description: 'Screen customer/address', auth: 'ADMIN' },
+      { method: 'GET', path: '/api/sanctions/matches', description: 'Get matches', auth: 'ADMIN' }
+    ],
+    services: ['SanctionsService', 'WatchlistService'],
+    tags: ['Missing', 'Compliance', 'Sanctions', 'Screening']
+  },
+
+  // Level 41: Cold Wallet Management
+  ColdWalletManagement: {
+    id: 'ColdWalletManagement',
+    type: 'service',
+    title: 'Cold Wallet Management',
+    icon: '🚀',
+    description: 'Cold wallet management with HSM integration for secure key storage. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/cold-wallet/create', description: 'Create cold wallet', auth: 'ADMIN' },
+      { method: 'POST', path: '/api/cold-wallet/sweep', description: 'Sweep to hot wallet', auth: 'ADMIN' },
+      { method: 'GET', path: '/api/cold-wallet/balance', description: 'Get balance', auth: 'ADMIN' }
+    ],
+    services: ['ColdWalletService', 'HSMService'],
+    tags: ['Missing', 'Security', 'Cold Wallet', 'HSM']
+  },
+
+  // Level 42: Multi-Signature Wallets
+  MultiSignatureWallets: {
+    id: 'MultiSignatureWallets',
+    type: 'service',
+    title: 'Multi-Signature Wallets',
+    icon: '🚀',
+    description: 'Multi-signature wallet system with M-of-N threshold signatures. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/multisig/create', description: 'Create multi-sig wallet', auth: 'USER' },
+      { method: 'POST', path: '/api/multisig/sign', description: 'Sign transaction', auth: 'USER' },
+      { method: 'GET', path: '/api/multisig/pending', description: 'Get pending signatures', auth: 'USER' }
+    ],
+    services: ['MultiSigService', 'SignatureService'],
+    tags: ['Missing', 'Security', 'Multi-Sig', 'Wallet']
+  },
+
+  // Level 46: Staking Services
+  StakingServices: {
+    id: 'StakingServices',
+    type: 'service',
+    title: 'Staking Services',
+    icon: '🚀',
+    description: 'Staking services for earning rewards on cryptocurrencies. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/staking/stake', description: 'Stake coins', auth: 'USER' },
+      { method: 'POST', path: '/api/staking/unstake', description: 'Unstake coins', auth: 'USER' },
+      { method: 'GET', path: '/api/staking/rewards', description: 'Get rewards', auth: 'USER' }
+    ],
+    services: ['StakingService', 'RewardsService'],
+    tags: ['Missing', 'Financial Services', 'Staking', 'Rewards']
+  },
+
+  // Level 47: Lending & Borrowing
+  LendingBorrowing: {
+    id: 'LendingBorrowing',
+    type: 'service',
+    title: 'Lending & Borrowing Platform',
+    icon: '🚀',
+    description: 'Lending and borrowing platform with collateral management. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'POST', path: '/api/lending/borrow', description: 'Borrow funds', auth: 'USER' },
+      { method: 'POST', path: '/api/lending/lend', description: 'Lend funds', auth: 'USER' },
+      { method: 'GET', path: '/api/lending/positions', description: 'Get positions', auth: 'USER' }
+    ],
+    services: ['LendingService', 'BorrowingService', 'CollateralService'],
+    tags: ['Missing', 'Financial Services', 'Lending', 'Borrowing']
+  },
+
+  // Level 51: Trading Analytics
+  TradingAnalytics: {
+    id: 'TradingAnalytics',
+    type: 'service',
+    title: 'Trading Analytics & Statistics',
+    icon: '🚀',
+    description: 'Trading analytics with statistics, charts, and insights. NOT in original Java codebase.',
+    endpoints: [
+      { method: 'GET', path: '/api/analytics/trading/stats', description: 'Get trading statistics', auth: 'USER' },
+      { method: 'GET', path: '/api/analytics/trading/charts', description: 'Get chart data', auth: 'USER' }
+    ],
+    services: ['TradingAnalyticsService', 'StatisticsService'],
+    tags: ['Missing', 'Analytics', 'Trading', 'Statistics']
   }
 }
 

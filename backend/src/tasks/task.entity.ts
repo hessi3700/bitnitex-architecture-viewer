@@ -42,10 +42,20 @@ export class Task {
   @Column('text', { nullable: true })
   dependencies: string // JSON string array
 
+  @Column('text', { nullable: true })
+  priority: string // CRITICAL, HIGH, MEDIUM, LOW
+
+  @Column('text', { nullable: true })
+  category: string // Category name
+
+  @Column('boolean', { default: false })
+  isMissing: boolean // Flag for missing components
+
   @CreateDateColumn()
   createdAt: Date
 
   @UpdateDateColumn()
   updatedAt: Date
 }
+
 

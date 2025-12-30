@@ -24,7 +24,10 @@ export class DiagramsService {
   }
 
   async findOne(id: string): Promise<Diagram> {
-    const diagram = await this.diagramsRepository.findOne({ where: { id } })
+    const diagram = await this.diagramsRepository.findOne({ 
+      where: { id },
+      relations: ['nodeEntities', 'nodeEntities.task', 'edgeEntities']
+    })
     if (!diagram) {
       throw new NotFoundException(`Diagram with ID ${id} not found`)
     }
@@ -32,7 +35,10 @@ export class DiagramsService {
   }
 
   async findByDiagramId(diagramId: string): Promise<Diagram | null> {
-    return this.diagramsRepository.findOne({ where: { diagramId } })
+    return this.diagramsRepository.findOne({ 
+      where: { diagramId },
+      relations: ['nodeEntities', 'nodeEntities.task', 'edgeEntities']
+    })
   }
 
   async update(id: string, updateDiagramDto: UpdateDiagramDto): Promise<Diagram> {

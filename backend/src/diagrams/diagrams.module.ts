@@ -6,10 +6,11 @@ import { NodesService } from './nodes.service'
 import { NodesController } from './nodes.controller'
 import { Diagram } from './diagram.entity'
 import { Node } from './node.entity'
+import { Edge } from './edge.entity'
 import { Task } from '../tasks/task.entity'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Diagram, Node, Task])],
+  imports: [TypeOrmModule.forFeature([Diagram, Node, Edge, Task])],
   controllers: [DiagramsController, NodesController],
   providers: [DiagramsService, NodesService],
   exports: [DiagramsService, NodesService],

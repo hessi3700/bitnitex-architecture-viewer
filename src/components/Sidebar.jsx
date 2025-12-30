@@ -1,12 +1,32 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAppStore } from '../store/AppStore'
-import { getAllDiagrams } from '../data/diagramRegistry'
+import { getAllDiagrams } from '../data/diagramRegistry' // Fallback only
+import { loadAllDiagramsFromBackend } from '../utils/diagramBackend'
+import { API_ENDPOINTS } from '../config/api'
 
 const Sidebar = () => {
   const { currentView, sidebarCollapsed, navigateToView, toggleSidebar } = useAppStore()
+  
+  // Use registry as primary source (always works, DB is for persistence)
   const diagrams = getAllDiagrams()
-
   const mainViews = diagrams.filter(d => d.type === 'composite' || d.type === 'detail')
+  
+  // Try to seed diagrams to DB in background (non-blocking)
+  useEffect(() => {
+    const seedDiagramsInBackground = async () => {
+      try {
+        const { loadAllDiagramsFromBackend, seedDiagramsAndNodes } = await import('../utils/diagramBackend')
+        const dbDiagrams = await loadAllDiagramsFromBackend()
+        if (!dbDiagrams || dbDiagrams.length === 0) {
+          console.log('🌱 Seeding diagrams to database in background...')
+          await seedDiagramsAndNodes()
+        }
+      } catch (error) {
+        console.warn('Could not seed diagrams:', error)
+      }
+    }
+    seedDiagramsInBackground()
+  }, [])
 
   return (
     <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>

@@ -318,6 +318,35 @@
   border-color: var(--accent-primary);
 }
 
+.todo-task-item.missing-task {
+  border-left: 4px solid #a855f7;
+  background: rgba(168, 85, 247, 0.05);
+}
+
+.todo-task-item.missing-task:hover {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.1);
+}
+
+.todo-task-item.missing-task.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: #a855f7;
+}
+
+.missing-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(168, 85, 247, 0.3);
+}
+
 .task-item-header {
   display: flex;
   gap: 12px;

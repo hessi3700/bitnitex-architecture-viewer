@@ -18,8 +18,19 @@ const ApiTester = () => {
   useEffect(() => {
     if (nodeDetails && nodeDetails.endpoints && nodeDetails.endpoints.length > 0 && !selectedEndpoint) {
       setSelectedEndpoint(nodeDetails.endpoints[0])
+      // Reset request data when switching nodes
+      setRequestData('{}')
+      setResponse(null)
     }
   }, [nodeDetails, selectedEndpoint])
+
+  // Reset request data when endpoint changes
+  useEffect(() => {
+    if (selectedEndpoint) {
+      setRequestData('{}')
+      setResponse(null)
+    }
+  }, [selectedEndpoint?.path])
 
   const handleTestEndpoint = async (endpoint) => {
     setSelectedEndpoint(endpoint)
@@ -27,39 +38,90 @@ const ApiTester = () => {
     setResponse(null)
 
     try {
-      const url = `${baseUrl}${endpoint.path}`
-      const options = {
-        method: endpoint.method,
-        headers: JSON.parse(headers)
+      // Validate and parse headers
+      let parsedHeaders = {}
+      try {
+        parsedHeaders = JSON.parse(headers)
+      } catch (e) {
+        setResponse({
+          error: true,
+          message: `Invalid JSON in headers: ${e.message}`,
+          time: 0
+        })
+        setLoading(false)
+        return
       }
 
+      // Validate and parse request body for POST/PUT/PATCH
+      let parsedBody = null
       if (['POST', 'PUT', 'PATCH'].includes(endpoint.method)) {
-        options.body = requestData
+        try {
+          parsedBody = JSON.parse(requestData)
+        } catch (e) {
+          setResponse({
+            error: true,
+            message: `Invalid JSON in request body: ${e.message}`,
+            time: 0
+          })
+          setLoading(false)
+          return
+        }
+      }
+
+      // Build URL
+      const url = `${baseUrl.replace(/\/$/, '')}${endpoint.path}`
+      
+      // Build fetch options
+      const options = {
+        method: endpoint.method,
+        headers: {
+          'Content-Type': 'application/json',
+          ...parsedHeaders
+        },
+        mode: 'cors' // Handle CORS
+      }
+
+      if (parsedBody !== null) {
+        options.body = JSON.stringify(parsedBody)
       }
 
       const startTime = Date.now()
-      const res = await fetch(url, options)
+      let res
+      try {
+        res = await fetch(url, options)
+      } catch (fetchError) {
+        // Handle network errors (CORS, connection refused, etc.)
+        throw new Error(`Network error: ${fetchError.message}. Make sure the server is running and CORS is enabled.`)
+      }
+      
       const endTime = Date.now()
 
-      const responseData = await res.text()
-      let parsedResponse
-      try {
-        parsedResponse = JSON.parse(responseData)
-      } catch {
-        parsedResponse = responseData
+      // Get response content type
+      const contentType = res.headers.get('content-type') || ''
+      let responseData
+      
+      if (contentType.includes('application/json')) {
+        try {
+          responseData = await res.json()
+        } catch (e) {
+          responseData = await res.text()
+        }
+      } else {
+        responseData = await res.text()
       }
 
       setResponse({
         status: res.status,
         statusText: res.statusText,
         headers: Object.fromEntries(res.headers.entries()),
-        data: parsedResponse,
-        time: endTime - startTime
+        data: responseData,
+        time: endTime - startTime,
+        url: url
       })
     } catch (error) {
       setResponse({
         error: true,
-        message: error.message,
+        message: error.message || 'Unknown error occurred',
         time: 0
       })
     } finally {
@@ -172,25 +234,38 @@ const ApiTester = () => {
         {selectedEndpoint && (
           <>
             <div className="api-tester-section">
-              <label className="api-tester-label">Headers</label>
+              <label className="api-tester-label">
+                Request URL
+                <span className="request-url">{baseUrl.replace(/\/$/, '')}{selectedEndpoint.path}</span>
+              </label>
+            </div>
+
+            <div className="api-tester-section">
+              <label className="api-tester-label">
+                Headers
+                <span className="label-hint">(JSON format)</span>
+              </label>
               <textarea
                 className="api-tester-textarea"
                 value={headers}
                 onChange={(e) => setHeaders(e.target.value)}
                 rows={4}
-                placeholder='{\n  "Content-Type": "application/json",\n  "Authorization": "Bearer token"\n}'
+                placeholder='{\n  "Authorization": "Bearer your-token-here",\n  "X-Custom-Header": "value"\n}'
               />
             </div>
 
             {['POST', 'PUT', 'PATCH'].includes(selectedEndpoint.method) && (
               <div className="api-tester-section">
-                <label className="api-tester-label">Request Body</label>
+                <label className="api-tester-label">
+                  Request Body
+                  <span className="label-hint">(JSON format)</span>
+                </label>
                 <textarea
                   className="api-tester-textarea"
                   value={requestData}
                   onChange={(e) => setRequestData(e.target.value)}
-                  rows={8}
-                  placeholder='{\n  "key": "value"\n}'
+                  rows={10}
+                  placeholder='{\n  "key": "value",\n  "number": 123\n}'
                 />
               </div>
             )}
@@ -200,7 +275,17 @@ const ApiTester = () => {
               onClick={() => handleTestEndpoint(selectedEndpoint)}
               disabled={loading}
             >
-              {loading ? '⏳ Sending...' : '🚀 Send Request'}
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Sending Request...
+                </>
+              ) : (
+                <>
+                  <span>🚀</span>
+                  Send Request
+                </>
+              )}
             </button>
           </>
         )}
@@ -208,17 +293,44 @@ const ApiTester = () => {
         {/* Response Display */}
         {response && (
           <div className="api-tester-section">
-            <label className="api-tester-label">
-              Response
-              {response.time > 0 && (
-                <span className="response-time">({response.time}ms)</span>
+            <div className="response-header">
+              <label className="api-tester-label">
+                Response
+                {response.time > 0 && (
+                  <span className="response-time">({response.time}ms)</span>
+                )}
+              </label>
+              {response.url && (
+                <div className="response-url">
+                  <span className="url-label">URL:</span>
+                  <code className="url-value">{response.url}</code>
+                  <button 
+                    className="copy-btn"
+                    onClick={() => {
+                      navigator.clipboard.writeText(response.url)
+                      // You could add a toast notification here
+                    }}
+                    title="Copy URL"
+                  >
+                    📋
+                  </button>
+                </div>
               )}
-            </label>
+            </div>
             <div className={`response-container ${response.error ? 'error' : `status-${Math.floor(response.status / 100)}xx`}`}>
               {response.error ? (
                 <div className="response-error">
                   <div className="error-title">❌ Error</div>
                   <div className="error-message">{response.message}</div>
+                  <div className="error-hint">
+                    <strong>Tips:</strong>
+                    <ul>
+                      <li>Check if the server is running</li>
+                      <li>Verify the base URL is correct</li>
+                      <li>Ensure CORS is enabled on the server</li>
+                      <li>Check browser console for more details</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
                 <>
@@ -228,13 +340,38 @@ const ApiTester = () => {
                     </span>
                   </div>
                   <div className="response-headers">
-                    <div className="response-headers-title">Headers:</div>
+                    <div className="response-headers-title">
+                      Response Headers
+                      <button 
+                        className="copy-btn-small"
+                        onClick={() => {
+                          navigator.clipboard.writeText(JSON.stringify(response.headers, null, 2))
+                        }}
+                        title="Copy headers"
+                      >
+                        📋
+                      </button>
+                    </div>
                     <pre className="response-headers-content">
                       {JSON.stringify(response.headers, null, 2)}
                     </pre>
                   </div>
                   <div className="response-body">
-                    <div className="response-body-title">Body:</div>
+                    <div className="response-body-title">
+                      Response Body
+                      <button 
+                        className="copy-btn-small"
+                        onClick={() => {
+                          const bodyText = typeof response.data === 'string' 
+                            ? response.data 
+                            : JSON.stringify(response.data, null, 2)
+                          navigator.clipboard.writeText(bodyText)
+                        }}
+                        title="Copy body"
+                      >
+                        📋
+                      </button>
+                    </div>
                     <pre className="response-body-content">
                       {typeof response.data === 'string' 
                         ? response.data 
