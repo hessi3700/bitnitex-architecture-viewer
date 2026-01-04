@@ -1,23 +1,24 @@
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from './app.module'
+import { json, urlencoded } from 'express'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
   
-  // Enable CORS for frontend - allow multiple origins
+  // Increase body size limit to 10MB (for large diagram/node data)
+  app.use(json({ limit: '10mb' }))
+  app.use(urlencoded({ limit: '10mb', extended: true }))
+  
+  // Enable CORS for frontend - allow all origins in development for local network access
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://localhost:5174',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
-      process.env.FRONTEND_URL || 'http://localhost:3000'
-    ],
-    credentials: true,
+    origin: '*', // Allow all origins - change to specific origins in production
+    credentials: false, // Set to false when using origin: '*'
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   })
   
   // Global validation pipe
@@ -29,8 +30,10 @@ async function bootstrap() {
   )
   
   const port = process.env.PORT || 3001
-  await app.listen(port)
-  console.log(`🚀 BitniTex Backend running on http://localhost:${port}`)
+  // Listen on all network interfaces (0.0.0.0) to allow access from local network
+  await app.listen(port, '0.0.0.0')
+  console.log(`🚀 BitniTex Backend running on http://0.0.0.0:${port}`)
+  console.log(`   Accessible from local network at http://<your-ip>:${port}`)
 }
 
 bootstrap()

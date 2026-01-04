@@ -9,8 +9,20 @@ const getApiBaseUrl = () => {
     return envUrl || null
   }
   
-  // In development, default to localhost
+  // In development, auto-detect server IP for local network access
   if (import.meta.env.DEV) {
+    // If accessed via IP address (not localhost), use that same IP for backend
+    // This allows friends on local network to connect automatically
+    const hostname = window.location.hostname
+    const port = window.location.port || '5173' // Default Vite dev server port
+    
+    // Check if we're accessing via IP address (not localhost/127.0.0.1)
+    if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      // Use the same hostname but with backend port (3001)
+      return `http://${hostname}:3001`
+    }
+    
+    // Default to localhost for local development
     return 'http://localhost:3001'
   }
   
@@ -48,5 +60,6 @@ export const API_ENDPOINTS = {
   nodesByDiagram: (diagramId) => buildEndpoint(`/api/nodes/diagram/${diagramId}`),
   nodesByNodeId: (nodeId) => buildEndpoint(`/api/nodes/node/${nodeId}`),
   bulkCreateNodes: buildEndpoint('/api/nodes/bulk'),
+  nodeMappings: buildEndpoint('/api/nodes/mappings'),
 }
 

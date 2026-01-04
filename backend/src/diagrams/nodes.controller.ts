@@ -33,6 +33,11 @@ export class NodesController {
     return this.nodesService.findByDiagramId(diagramId)
   }
 
+  @Get('mappings')
+  getNodeToTaskMappings() {
+    return this.nodesService.getNodeToTaskMappings()
+  }
+
   @Get('node/:nodeId')
   findByNodeId(@Param('nodeId') nodeId: string) {
     return this.nodesService.findByNodeId(nodeId)

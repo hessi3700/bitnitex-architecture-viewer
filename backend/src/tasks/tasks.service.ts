@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Repository, Like } from 'typeorm'
 import { Task, TaskStatus } from './task.entity'
 import { CreateTaskDto } from './dto/create-task.dto'
 import { UpdateTaskDto } from './dto/update-task.dto'
@@ -23,7 +23,10 @@ export class TasksService {
 
   async findAll(): Promise<Task[]> {
     try {
+      // Only return Level tasks (tasks with nodeId starting with "Level")
+      // This filters out old test tasks and unwanted tasks
       const tasks = await this.tasksRepository.find({
+        where: { nodeId: Like('Level%') },
         order: { createdAt: 'DESC' },
       })
       return tasks.map(task => {
@@ -148,7 +151,7 @@ export class TasksService {
   async seedAllLevelTasks(): Promise<{ created: number; skipped: number; message: string }> {
     // Check if tasks already exist
     const existingTasks = await this.tasksRepository.find({
-      where: { nodeId: () => "nodeId LIKE 'Level%'" }
+      where: { nodeId: Like('Level%') }
     })
     
     if (existingTasks.length > 0) {
@@ -166,6 +169,78 @@ export class TasksService {
       skipped: 0,
       message: 'No tasks in database. Please seed tasks using POST /api/tasks/seed with task data, or ensure tasks are seeded on first load.'
     }
+  }
+
+  async cleanupNonLevelTasks(): Promise<{ deleted: number; message: string }> {
+    // Find all tasks that don't start with "Level"
+    const allTasks = await this.tasksRepository.find()
+    const nonLevelTasks = allTasks.filter(task => !task.nodeId.startsWith('Level'))
+    
+    if (nonLevelTasks.length === 0) {
+      return {
+        deleted: 0,
+        message: 'No non-Level tasks found. All tasks are Level tasks.'
+      }
+    }
+    
+    // Delete all non-Level tasks
+    await this.tasksRepository.remove(nonLevelTasks)
+    
+    return {
+      deleted: nonLevelTasks.length,
+      message: `Deleted ${nonLevelTasks.length} non-Level task(s). Only Level tasks remain in database.`
+    }
+  }
+
+  async removeDuplicateTasks(): Promise<{ removed: number; message: string }> {
+    // Find all tasks
+    const allTasks = await this.tasksRepository.find({
+      where: { nodeId: Like('Level%') },
+      order: { createdAt: 'DESC' }
+    })
+    
+    // Group by nodeId
+    const tasksByNodeId = new Map<string, Task[]>()
+    allTasks.forEach(task => {
+      if (!tasksByNodeId.has(task.nodeId)) {
+        tasksByNodeId.set(task.nodeId, [])
+      }
+      tasksByNodeId.get(task.nodeId)!.push(task)
+    })
+    
+    // Find duplicates (nodeIds with more than one task)
+    const duplicates: Task[] = []
+    tasksByNodeId.forEach((tasks, nodeId) => {
+      if (tasks.length > 1) {
+        // Keep the most recent (first in DESC order), remove the rest
+        const toRemove = tasks.slice(1) // All except the first (most recent)
+        duplicates.push(...toRemove)
+      }
+    })
+    
+    if (duplicates.length === 0) {
+      return {
+        removed: 0,
+        message: 'No duplicate tasks found. All tasks are unique.'
+      }
+    }
+    
+    // Delete duplicates
+    await this.tasksRepository.remove(duplicates)
+    
+    return {
+      removed: duplicates.length,
+      message: `Removed ${duplicates.length} duplicate tasks. Kept the most recent version of each task.`
+    }
+  }
+
+  async findAllLevelTasksOnly(): Promise<Task[]> {
+    // Only return Level tasks (tasks with nodeId starting with "Level")
+    const tasks = await this.tasksRepository.find({
+      where: { nodeId: Like('Level%') },
+      order: { createdAt: 'DESC' },
+    })
+    return tasks.map(task => this.transformTask(task))
   }
 
   private transformTask(task: Task): any {

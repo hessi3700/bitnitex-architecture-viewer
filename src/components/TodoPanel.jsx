@@ -7,8 +7,10 @@ import './TodoPanel.css'
 // Subtask Item Component - separate component to allow hooks
 const SubtaskItem = ({ subtask, idx, taskId, isCompleted, toggleSubtask }) => {
   const [showAIPrompt, setShowAIPrompt] = useState(false)
+  const [promptMode, setPromptMode] = useState('ai') // 'ai' or 'java'
   const subtaskId = subtask.id || `subtask-${idx}-${subtask.title}`
   const aiPrompt = subtask.aiPrompt || null
+  const javaImportPrompt = subtask.javaImportPrompt || null
 
   return (
     <div className="subtask-item">
@@ -33,17 +35,44 @@ const SubtaskItem = ({ subtask, idx, taskId, isCompleted, toggleSubtask }) => {
             onClick={(e) => {
               e.stopPropagation()
               setShowAIPrompt(!showAIPrompt)
+              setPromptMode('ai')
             }}
             title="Show AI Prompt"
           >
             🤖 AI
           </button>
         )}
+        {javaImportPrompt && (
+          <button
+            className="subtask-ai-btn"
+            style={{ marginLeft: '8px', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowAIPrompt(!showAIPrompt)
+              setPromptMode('java')
+            }}
+            title="Show Java Import Prompt"
+          >
+            ☕ Java
+          </button>
+        )}
       </div>
-      {showAIPrompt && aiPrompt && (
+      {showAIPrompt && (
         <div className="subtask-ai-prompt">
           <div className="ai-prompt-header">
-            <span>🤖 AI Assistant Prompt</span>
+            <span>{promptMode === 'java' ? '☕ Java Import Prompt' : '🤖 AI Assistant Prompt'}</span>
+            {javaImportPrompt && aiPrompt && (
+              <button
+                className="ai-prompt-switch"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPromptMode(promptMode === 'ai' ? 'java' : 'ai')
+                }}
+                style={{ marginRight: '8px', padding: '4px 8px', fontSize: '11px', background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)', borderRadius: '4px', cursor: 'pointer' }}
+              >
+                {promptMode === 'ai' ? '☕ Switch to Java' : '🤖 Switch to AI'}
+              </button>
+            )}
             <button 
               className="ai-prompt-close"
               onClick={(e) => {
@@ -55,17 +84,39 @@ const SubtaskItem = ({ subtask, idx, taskId, isCompleted, toggleSubtask }) => {
             </button>
           </div>
           <div className="ai-prompt-content">
-            <p>{aiPrompt}</p>
-            <button
-              className="ai-prompt-copy"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigator.clipboard.writeText(aiPrompt)
-                alert('AI prompt copied to clipboard!')
-              }}
-            >
-              📋 Copy Prompt
-            </button>
+            {promptMode === 'java' && javaImportPrompt ? (
+              <>
+                <p>{javaImportPrompt}</p>
+                <button
+                  className="ai-prompt-copy"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigator.clipboard.writeText(javaImportPrompt)
+                    alert('Java import prompt copied to clipboard!')
+                  }}
+                >
+                  📋 Copy Java Prompt
+                </button>
+              </>
+            ) : aiPrompt ? (
+              <>
+                <p>{aiPrompt}</p>
+                <button
+                  className="ai-prompt-copy"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigator.clipboard.writeText(aiPrompt)
+                    alert('AI prompt copied to clipboard!')
+                  }}
+                >
+                  📋 Copy Prompt
+                </button>
+              </>
+            ) : (
+              <p style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                AI prompt will be generated automatically. This feature helps you get professional implementation guidance for this subtask.
+              </p>
+            )}
           </div>
         </div>
       )}

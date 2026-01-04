@@ -14,7 +14,9 @@ const Toolbar = () => {
     toggleFullscreen,
     showApiTester,
     setShowApiTester,
-    selectedNode
+    selectedNode,
+    isEditMode,
+    setIsEditMode
   } = useAppStore()
 
   const { setShowTodoPanel, getProgress } = useTodoStore()
@@ -79,6 +81,15 @@ const Toolbar = () => {
         >
           <span className="toolbar-btn-icon">🗺️</span>
           <span>Minimap</span>
+        </button>
+        
+        <button 
+          className={`toolbar-btn ${isEditMode ? 'active' : ''}`}
+          onClick={() => setIsEditMode(!isEditMode)}
+          title="Enable edit mode to add nodes, connect them, and change colors"
+        >
+          <span className="toolbar-btn-icon">✏️</span>
+          <span>{isEditMode ? 'Exit Edit' : 'Edit Diagram'}</span>
         </button>
         
         <button className="toolbar-btn" onClick={handleFullscreen}>

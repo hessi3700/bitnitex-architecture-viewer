@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Repository, Not, IsNull } from 'typeorm'
 import { Node } from './node.entity'
 import { Task } from '../tasks/task.entity'
 
@@ -33,6 +33,38 @@ export class NodesService {
       relations: ['diagram', 'task'],
       order: { createdAt: 'DESC' },
     })
+  }
+
+  async getNodeToTaskMappings(): Promise<Record<string, string>> {
+    // Get all nodes with their taskNodeId mappings
+    const nodes = await this.nodesRepository.find({
+      where: { taskNodeId: Not(IsNull()) },
+      select: ['nodeId', 'label', 'taskNodeId']
+    })
+    
+    // Build a mapping object: { nodeId: taskNodeId, label: taskNodeId, ... }
+    const mappings: Record<string, string> = {}
+    
+    nodes.forEach(node => {
+      // Map by nodeId
+      if (node.nodeId && node.taskNodeId) {
+        mappings[node.nodeId] = node.taskNodeId
+      }
+      
+      // Map by label (cleaned)
+      if (node.label && node.taskNodeId) {
+        const cleanLabel = node.label
+          .replace(/[✅🔄⏸️🚫🔒🚀🌐🔐🎛️⚙️💰👤📧🎫⛓️💳💾]/g, '')
+          .replace(/<br\s*\/?>/gi, ' ')
+          .replace(/\s+/g, ' ')
+          .trim()
+        if (cleanLabel) {
+          mappings[cleanLabel] = node.taskNodeId
+        }
+      }
+    })
+    
+    return mappings
   }
 
   async findByDiagramId(diagramId: string): Promise<Node[]> {

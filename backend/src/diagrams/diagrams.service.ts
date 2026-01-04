@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Diagram } from './diagram.entity'
+import { Edge } from './edge.entity'
 import { CreateDiagramDto } from './dto/create-diagram.dto'
 import { UpdateDiagramDto } from './dto/update-diagram.dto'
 
@@ -10,11 +11,19 @@ export class DiagramsService {
   constructor(
     @InjectRepository(Diagram)
     private diagramsRepository: Repository<Diagram>,
+    @InjectRepository(Edge)
+    private edgesRepository: Repository<Edge>,
   ) {}
 
   async create(createDiagramDto: CreateDiagramDto): Promise<Diagram> {
     const diagram = this.diagramsRepository.create(createDiagramDto)
-    return this.diagramsRepository.save(diagram)
+    const savedDiagram = await this.diagramsRepository.save(diagram)
+    
+    // Sync edges from Mermaid code to Edge entities
+    await this.syncEdgesFromMermaid(savedDiagram)
+    
+    // Reload with relations
+    return await this.findOne(savedDiagram.id)
   }
 
   async findAll(): Promise<Diagram[]> {
@@ -44,7 +53,13 @@ export class DiagramsService {
   async update(id: string, updateDiagramDto: UpdateDiagramDto): Promise<Diagram> {
     const diagram = await this.findOne(id)
     Object.assign(diagram, updateDiagramDto)
-    return this.diagramsRepository.save(diagram)
+    const savedDiagram = await this.diagramsRepository.save(diagram)
+    
+    // Sync edges from Mermaid code to Edge entities
+    await this.syncEdgesFromMermaid(savedDiagram)
+    
+    // Reload with relations
+    return await this.findOne(id)
   }
 
   async updateByDiagramId(diagramId: string, updateDiagramDto: UpdateDiagramDto): Promise<Diagram> {
@@ -72,11 +87,114 @@ export class DiagramsService {
         throw new Error('Edges must be a valid JSON object or array')
       }
       
-      return await this.diagramsRepository.save(diagram)
+      // Save diagram first to get the ID
+      const savedDiagram = await this.diagramsRepository.save(diagram)
+      
+      // Sync edges from Mermaid code to Edge entities
+      await this.syncEdgesFromMermaid(savedDiagram)
+      
+      // Reload with relations
+      return await this.findByDiagramId(diagramId)
     } catch (error) {
       console.error('Error updating diagram by diagramId:', error)
       throw error
     }
+  }
+
+  // Extract edges from Mermaid code and sync to Edge entities
+  private async syncEdgesFromMermaid(diagram: Diagram): Promise<void> {
+    const mermaidCode = diagram.customMermaidCode || diagram.mermaidCode || ''
+    if (!mermaidCode) return
+
+    // Extract edges from Mermaid code
+    const edges = this.extractEdgesFromMermaid(mermaidCode)
+    
+    // Get existing edges for this diagram
+    const existingEdges = await this.edgesRepository.find({
+      where: { diagramId: diagram.id }
+    })
+    
+    // Create a map of existing edges by sourceNodeId-targetNodeId
+    const existingEdgeMap = new Map<string, Edge>()
+    existingEdges.forEach(edge => {
+      const key = `${edge.sourceNodeId}-->${edge.targetNodeId}`
+      existingEdgeMap.set(key, edge)
+    })
+    
+    // Create a set of edges from Mermaid code
+    const mermaidEdgeSet = new Set<string>()
+    edges.forEach(edge => {
+      const key = `${edge.source}-->${edge.target}`
+      mermaidEdgeSet.add(key)
+    })
+    
+    // Delete edges that are no longer in Mermaid code
+    for (const [key, existingEdge] of existingEdgeMap.entries()) {
+      if (!mermaidEdgeSet.has(key)) {
+        await this.edgesRepository.remove(existingEdge)
+      }
+    }
+    
+    // Create or update edges from Mermaid code
+    for (const edgeData of edges) {
+      const key = `${edgeData.source}-->${edgeData.target}`
+      const existingEdge = existingEdgeMap.get(key)
+      
+      if (existingEdge) {
+        // Update existing edge
+        existingEdge.label = edgeData.label || null
+        existingEdge.type = edgeData.type || 'directed'
+        existingEdge.metadata = edgeData.metadata || {}
+        await this.edgesRepository.save(existingEdge)
+      } else {
+        // Create new edge
+        const newEdge = this.edgesRepository.create({
+          sourceNodeId: edgeData.source,
+          targetNodeId: edgeData.target,
+          label: edgeData.label || null,
+          type: edgeData.type || 'directed',
+          metadata: edgeData.metadata || {},
+          diagramId: diagram.id
+        })
+        await this.edgesRepository.save(newEdge)
+      }
+    }
+  }
+
+  // Extract edges from Mermaid code
+  private extractEdgesFromMermaid(mermaidCode: string): Array<{source: string, target: string, label: string | null, type: string, metadata: any}> {
+    const edges: Array<{source: string, target: string, label: string | null, type: string, metadata: any}> = []
+    const edgeSet = new Set<string>()
+    
+    // Match edges: source --> target, source -.-> target, source --- target
+    // Also match: source -->|label| target
+    const edgeRegex = /(\w+)\s*(?:-->|-.->|---)\s*(?:\|([^|]+)\|)?\s*(\w+)/g
+    let match
+    
+    while ((match = edgeRegex.exec(mermaidCode)) !== null) {
+      const source = match[1]
+      const target = match[3]
+      const label = match[2] || null
+      const edgeType = match[0].includes('-.->') ? 'dashed' : 'directed'
+      const edgeKey = `${source}-->${target}`
+      
+      // Skip if already processed
+      if (edgeSet.has(edgeKey)) continue
+      edgeSet.add(edgeKey)
+      
+      edges.push({
+        source: source,
+        target: target,
+        label: label,
+        type: edgeType,
+        metadata: {
+          extractedFrom: 'mermaid',
+          originalEdge: match[0]
+        }
+      })
+    }
+    
+    return edges
   }
 
   async remove(id: string): Promise<void> {

@@ -19,6 +19,7 @@ export const AppProvider = ({ children }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showApiTester, setShowApiTester] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
 
   const navigateToView = useCallback((view, nodeName = null) => {
     setCurrentView(view)
@@ -68,6 +69,7 @@ export const AppProvider = ({ children }) => {
     sidebarCollapsed,
     isFullscreen,
     showApiTester,
+    isEditMode,
     navigateToView,
     zoomIn,
     zoomOut,
@@ -76,7 +78,8 @@ export const AppProvider = ({ children }) => {
     toggleSidebar,
     toggleFullscreen,
     setSelectedNode,
-    setShowApiTester
+    setShowApiTester,
+    setIsEditMode
   }
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

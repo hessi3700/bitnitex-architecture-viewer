@@ -42,7 +42,7 @@ export const generateNodeStyle = (nodeId, status, isMissing = false) => {
       default:
         fill = '#4c1d95' // purple for missing components
     }
-    return `style ${nodeId} fill:${fill},stroke:#a855f7,stroke-width:4px,stroke-dasharray: 5 5,color:#e1e8f0`
+    return `style ${nodeId} fill:${fill},stroke:#a855f7,stroke-width:2px,stroke-dasharray: 5 5,color:#e1e8f0`
   }
   
   // Regular components
@@ -60,7 +60,7 @@ export const generateNodeStyle = (nodeId, status, isMissing = false) => {
       fill = '#1e3a5f' // default blue
   }
   
-  return `style ${nodeId} fill:${fill},stroke:${color},stroke-width:4px,color:#e1e8f0`
+  return `style ${nodeId} fill:${fill},stroke:${color},stroke-width:2px,color:#e1e8f0`
 }
 
 // Add status badges to node labels

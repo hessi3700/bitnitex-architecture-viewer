@@ -20,583 +20,16 @@ export const TaskPriority = {
 // Tasks are seeded via backend API endpoint /api/tasks/seed
 // If database is empty, tasks need to be seeded via the backend seed endpoint
 
-const NODE_TO_LEVEL_MAPPING = {
-  // Level 1: Project Foundation
-  'ProjectSetup': 'Level1_ProjectSetup',
-  'Project Foundation': 'Level1_ProjectSetup',
-  'NestJS Setup': 'Level1_ProjectSetup',
-  'Project Setup': 'Level1_ProjectSetup',
-  
-  // Level 2: Database & Authentication
-  'Database': 'Level2_DatabaseAuth',
-  'DATABASE': 'Level2_DatabaseAuth',
-  'Database 81': 'Level2_DatabaseAuth',
-  'Authentication': 'Level2_DatabaseAuth',
-  'Auth': 'Level2_DatabaseAuth',
-  'JWT': 'Level2_DatabaseAuth',
-  '2FA': 'Level2_DatabaseAuth',
-  'OTP': 'Level2_DatabaseAuth',
-  'RBAC': 'Level2_DatabaseAuth',
-  'Security': 'Level2_DatabaseAuth',
-  'SECURITY': 'Level2_DatabaseAuth',
-  
-  // Level 3: Customer & Identity
-  'Customer': 'Level3_CustomerIdentity',
-  'CustomerController': 'Level3_CustomerIdentity',
-  'CustomerService': 'Level3_CustomerIdentity',
-  'Identity': 'Level3_CustomerIdentity',
-  'IDENTITY KYC': 'Level3_CustomerIdentity',
-  'Services3': 'Level3_CustomerIdentity', // From diagram
-  
-  // Level 4: Notifications
-  'Email': 'Level4_Notifications',
-  'EmailService': 'Level4_Notifications',
-  'SMS': 'Level4_Notifications',
-  'SMSService': 'Level4_Notifications',
-  'Notification': 'Level4_Notifications',
-  'NotificationService': 'Level4_Notifications',
-  'NOTIFICATIONS': 'Level4_Notifications',
-  'Services4': 'Level4_Notifications', // From diagram
-  
-  // Level 5: Wallet Services
-  'Wallet': 'Level5_WalletServices',
-  'WalletService': 'Level5_WalletServices',
-  'CustomerWallet': 'Level5_WalletServices',
-  'CustomerWalletService': 'Level5_WalletServices',
-  'Deposit': 'Level5_WalletServices',
-  'DepositService': 'Level5_WalletServices',
-  'Withdrawal': 'Level5_WalletServices',
-  'WithdrawalService': 'Level5_WalletServices',
-  'WALLET SERVICES': 'Level5_WalletServices',
-  'Services2': 'Level5_WalletServices', // From diagram
-  
-  // Level 6: Blockchain
-  'ApieService': 'Level6_Blockchain',
-  'Apie': 'Level6_Blockchain',
-  'Blockchain': 'Level6_Blockchain',
-  'BLOCKCHAIN': 'Level6_Blockchain',
-  'ETH': 'Level6_Blockchain',
-  'TRON': 'Level6_Blockchain',
-  'BTC': 'Level6_Blockchain',
-  'XRP': 'Level6_Blockchain',
-  'XLM': 'Level6_Blockchain',
-  'BSC': 'Level6_Blockchain',
-  
-  // Level 7: Trading Engine
-  'Order': 'Level7_TradingEngine',
-  'OrderService': 'Level7_TradingEngine',
-  'Trade': 'Level7_TradingEngine',
-  'TradeService': 'Level7_TradingEngine',
-  'OrderBook': 'Level7_TradingEngine',
-  'Trading Engine': 'Level7_TradingEngine',
-  'Services1': 'Level7_TradingEngine', // From diagram
-  
-  // Level 8: Market & Coin Management
-  'Market': 'Level8_MarketManagement',
-  'MarketService': 'Level8_MarketManagement',
-  'Coin': 'Level8_MarketManagement',
-  'CoinService': 'Level8_MarketManagement',
-  'MarketController': 'Level8_MarketManagement',
-  'CoinController': 'Level8_MarketManagement',
-  
-  // Level 9: Trading Controllers
-  'OrderController': 'Level9_TradingControllers',
-  'TradeController': 'Level9_TradingControllers',
-  
-  // Level 10: Wallet Controller
-  'WalletController': 'Level10_WalletController',
-  
-  // Level 11: Payment Gateways
-  'Payment': 'Level11_PaymentGateways',
-  'PAYMENT GATEWAYS': 'Level11_PaymentGateways',
-  'Vandar': 'Level11_PaymentGateways',
-  'Jibit': 'Level11_PaymentGateways',
-  'NextPay': 'Level11_PaymentGateways',
-  'RayanPay': 'Level11_PaymentGateways',
-  'Sadad': 'Level11_PaymentGateways',
-  'Zarinpal': 'Level11_PaymentGateways',
-  'PaymentGateway': 'Level11_PaymentGateways',
-  
-  // Level 12: KYC & Identity
-  'FinoTech': 'Level12_KYCIdentity',
-  'FinoTechService': 'Level12_KYCIdentity',
-  'JibitService': 'Level12_KYCIdentity',
-  'BankAccount': 'Level12_KYCIdentity',
-  'BankAccountService': 'Level12_KYCIdentity',
-  'UserAccountLevel': 'Level12_KYCIdentity',
-  'UserAccountLevelService': 'Level12_KYCIdentity',
-  'KYC': 'Level12_KYCIdentity',
-  
-  // Level 13: Admin & RBAC
-  'Admin': 'Level13_AdminRBAC',
-  'AdminController': 'Level13_AdminRBAC',
-  'AdminService': 'Level13_AdminRBAC',
-  'Role': 'Level13_AdminRBAC',
-  'RoleService': 'Level13_AdminRBAC',
-  'RolesController': 'Level13_AdminRBAC',
-  'Privilege': 'Level13_AdminRBAC',
-  
-  // Level 14: OTC Exchange
-  'Exchange': 'Level14_OTCExchange',
-  'ExchangeAction': 'Level14_OTCExchange',
-  'ExchangeActionController': 'Level14_OTCExchange',
-  'ExchangeActionService': 'Level14_OTCExchange',
-  'OTC': 'Level14_OTCExchange',
-  
-  // Level 15: Support & Content
-  'Ticket': 'Level15_SupportContent',
-  'TicketController': 'Level15_SupportContent',
-  'TicketService': 'Level15_SupportContent',
-  'Blog': 'Level15_SupportContent',
-  'BlogController': 'Level15_SupportContent',
-  'BlogService': 'Level15_SupportContent',
-  'File': 'Level15_SupportContent',
-  'FileService': 'Level15_SupportContent',
-  'Message': 'Level15_SupportContent',
-  'MessageService': 'Level15_SupportContent',
-  'FAQ': 'Level15_SupportContent',
-  'FAQService': 'Level15_SupportContent',
-  'CONTENT SUPPORT': 'Level15_SupportContent',
-  'Services5': 'Level15_SupportContent', // From diagram
-  
-  // Level 16: Promotional
-  'GiftCode': 'Level16_Promotional',
-  'GiftCodeController': 'Level16_Promotional',
-  'GiftCodeService': 'Level16_Promotional',
-  'ReferralCode': 'Level16_Promotional',
-  'ReferralCodeController': 'Level16_Promotional',
-  'ReferralCodeService': 'Level16_Promotional',
-  
-  // Level 17: Additional Services
-  'ExchangeSetting': 'Level17_AdditionalServices',
-  'ExchangeSettingService': 'Level17_AdditionalServices',
-  'CustomerToken': 'Level17_AdditionalServices',
-  'CustomerTokenService': 'Level17_AdditionalServices',
-  'Alarm': 'Level17_AdditionalServices',
-  'AlarmService': 'Level17_AdditionalServices',
-  'Country': 'Level17_AdditionalServices',
-  'CountryService': 'Level17_AdditionalServices',
-  'Language': 'Level17_AdditionalServices',
-  'LanguageService': 'Level17_AdditionalServices',
-  'ATM': 'Level17_AdditionalServices',
-  'AtmService': 'Level17_AdditionalServices',
-  'CreditCard': 'Level17_AdditionalServices',
-  'CreditCardService': 'Level17_AdditionalServices',
-  'SaminCard': 'Level17_AdditionalServices',
-  'SaminCardService': 'Level17_AdditionalServices',
-  
-  // Level 18: Testing & Documentation
-  'Testing': 'Level18_TestingDocumentation',
-  'Documentation': 'Level18_TestingDocumentation',
-  'Tests': 'Level18_TestingDocumentation',
-  
-  // Level 19: Scheduled Tasks
-  'Scheduled': 'Level19_ScheduledTasks',
-  'ScheduledTasks': 'Level19_ScheduledTasks',
-  'Background Jobs': 'Level19_ScheduledTasks',
-  'Cron': 'Level19_ScheduledTasks',
-  
-  // Level 20: WebSocket & Real-time
-  'WebSocket': 'Level20_WebSocketRealtime',
-  'Websocket': 'Level20_WebSocketRealtime',
-  'Real-time': 'Level20_WebSocketRealtime',
-  'Realtime': 'Level20_WebSocketRealtime',
-  'Socket': 'Level20_WebSocketRealtime',
-  
-  // Level 21: Error Handling & Logging
-  'Error': 'Level21_ErrorHandlingLogging',
-  'ErrorHandling': 'Level21_ErrorHandlingLogging',
-  'Logging': 'Level21_ErrorHandlingLogging',
-  'Exception': 'Level21_ErrorHandlingLogging',
-  
-  // Level 22: Performance & Caching
-  'Performance': 'Level22_PerformanceCaching',
-  'Caching': 'Level22_PerformanceCaching',
-  'Cache': 'Level22_PerformanceCaching',
-  'Redis': 'Level22_PerformanceCaching',
-  
-  // Level 23: Security Hardening
-  'Security Hardening': 'Level23_SecurityHardening',
-  'Rate Limiting': 'Level23_SecurityHardening',
-  'CORS': 'Level23_SecurityHardening',
-  'Helmet': 'Level23_SecurityHardening',
-  
-  // Level 24: Data Migration & Seeding
-  'Migration': 'Level24_DataMigrationSeeding',
-  'Seeding': 'Level24_DataMigrationSeeding',
-  'Seed': 'Level24_DataMigrationSeeding',
-  'Data Migration': 'Level24_DataMigrationSeeding',
-  
-  // Level 25: Unit Testing
-  'Unit Test': 'Level25_UnitTesting',
-  'Unit Testing': 'Level25_UnitTesting',
-  
-  // Level 26: Integration Testing
-  'Integration Test': 'Level26_IntegrationTesting',
-  'Integration Testing': 'Level26_IntegrationTesting',
-  'E2E': 'Level26_IntegrationTesting',
-  
-  // Level 27: Deployment & DevOps
-  'Deployment': 'Level27_DeploymentDevOps',
-  'DevOps': 'Level27_DeploymentDevOps',
-  'Docker': 'Level27_DeploymentDevOps',
-  'CI/CD': 'Level27_DeploymentDevOps',
-  
-  // Level 28: Monitoring & Health Checks
-  'Monitoring': 'Level28_MonitoringHealthChecks',
-  'Health': 'Level28_MonitoringHealthChecks',
-  'Health Check': 'Level28_MonitoringHealthChecks',
-  'Metrics': 'Level28_MonitoringHealthChecks',
-  
-  // Level 29: API Documentation
-  'Swagger': 'Level29_APIDocumentation',
-  'API Documentation': 'Level29_APIDocumentation',
-  'OpenAPI': 'Level29_APIDocumentation',
-  
-  // Level 30: Final Documentation
-  'Final Documentation': 'Level30_FinalDocumentation',
-  'Handoff': 'Level30_FinalDocumentation',
-  
-  // ========== MISSING COMPONENTS (Levels 31-60) ==========
-  
-  // Level 31: Margin Trading
-  'Margin': 'Level31_MarginTrading',
-  'MarginTrading': 'Level31_MarginTrading',
-  'MarginAccount': 'Level31_MarginTrading',
-  'Leverage': 'Level31_MarginTrading',
-  'Liquidation': 'Level31_MarginTrading',
-  
-  // Level 32: Futures & Perpetual
-  'Futures': 'Level32_FuturesPerpetual',
-  'Perpetual': 'Level32_FuturesPerpetual',
-  'PerpetualContract': 'Level32_FuturesPerpetual',
-  'FundingRate': 'Level32_FuturesPerpetual',
-  'MarkPrice': 'Level32_FuturesPerpetual',
-  
-  // Level 33: Options Trading
-  'Options': 'Level33_OptionsTrading',
-  'OptionsTrading': 'Level33_OptionsTrading',
-  'BlackScholes': 'Level33_OptionsTrading',
-  'Greeks': 'Level33_OptionsTrading',
-  
-  // Level 34: Advanced Order Types
-  'Iceberg': 'Level34_AdvancedOrderTypes',
-  'TWAP': 'Level34_AdvancedOrderTypes',
-  'VWAP': 'Level34_AdvancedOrderTypes',
-  'TrailingStop': 'Level34_AdvancedOrderTypes',
-  'BracketOrder': 'Level34_AdvancedOrderTypes',
-  
-  // Level 35: Trading Bots & API
-  'TradingBot': 'Level35_TradingBotsAPI',
-  'TradingBots': 'Level35_TradingBotsAPI',
-  'ApiKey': 'Level35_TradingBotsAPI',
-  'CopyTrading': 'Level35_TradingBotsAPI',
-  'SocialTrading': 'Level35_TradingBotsAPI',
-  
-  // Level 36: AML Monitoring
-  'AML': 'Level36_AMLMonitoring',
-  'AMLMonitoring': 'Level36_AMLMonitoring',
-  'TransactionMonitoring': 'Level36_AMLMonitoring',
-  'SAR': 'Level36_AMLMonitoring',
-  'SuspiciousActivity': 'Level36_AMLMonitoring',
-  
-  // Level 37: Sanctions Screening
-  'Sanctions': 'Level37_SanctionsScreening',
-  'SanctionsScreening': 'Level37_SanctionsScreening',
-  'OFAC': 'Level37_SanctionsScreening',
-  'Watchlist': 'Level37_SanctionsScreening',
-  
-  // Level 38: Regulatory Reporting
-  'Regulatory': 'Level38_RegulatoryReporting',
-  'RegulatoryReporting': 'Level38_RegulatoryReporting',
-  'CDD': 'Level38_RegulatoryReporting',
-  'EDD': 'Level38_RegulatoryReporting',
-  'Compliance': 'Level38_RegulatoryReporting',
-  
-  // Level 39: Tax Reporting
-  'Tax': 'Level39_TaxReporting',
-  'TaxReporting': 'Level39_TaxReporting',
-  '1099B': 'Level39_TaxReporting',
-  'TaxCalculation': 'Level39_TaxReporting',
-  
-  // Level 40: Advanced Risk Management
-  'RiskManagement': 'Level40_RiskManagement',
-  'RiskScoring': 'Level40_RiskManagement',
-  'BehavioralAnalytics': 'Level40_RiskManagement',
-  'DeviceFingerprinting': 'Level40_RiskManagement',
-  
-  // Level 41: Cold Wallet Management
-  'ColdWallet': 'Level41_ColdWalletManagement',
-  'ColdWalletManagement': 'Level41_ColdWalletManagement',
-  'HSM': 'Level41_ColdWalletManagement',
-  
-  // Level 42: Multi-Signature Wallets
-  'MultiSig': 'Level42_MultiSignatureWallets',
-  'MultiSignature': 'Level42_MultiSignatureWallets',
-  'MultiSigWallet': 'Level42_MultiSignatureWallets',
-  
-  // Level 43: HSM Integration
-  'HSMIntegration': 'Level43_HSMIntegration',
-  'HardwareSecurityModule': 'Level43_HSMIntegration',
-  
-  // Level 44: Advanced Security
-  'AdvancedSecurity': 'Level44_AdvancedSecurity',
-  'SecurityFeatures': 'Level44_AdvancedSecurity',
-  'PenetrationTesting': 'Level44_AdvancedSecurity',
-  
-  // Level 45: Security Monitoring
-  'SecurityMonitoring': 'Level45_SecurityMonitoring',
-  'ThreatDetection': 'Level45_SecurityMonitoring',
-  'SIEM': 'Level45_SecurityMonitoring',
-  
-  // Level 46: Staking Services
-  'Staking': 'Level46_StakingServices',
-  'StakingService': 'Level46_StakingServices',
-  'StakingRewards': 'Level46_StakingServices',
-  
-  // Level 47: Lending & Borrowing
-  'Lending': 'Level47_LendingBorrowing',
-  'Borrowing': 'Level47_LendingBorrowing',
-  'LendingPlatform': 'Level47_LendingBorrowing',
-  
-  // Level 48: Yield Farming
-  'YieldFarming': 'Level48_YieldFarming',
-  'LiquidityPool': 'Level48_YieldFarming',
-  'DeFi': 'Level48_YieldFarming',
-  
-  // Level 49: Airdrops & Distribution
-  'Airdrop': 'Level49_AirdropsDistribution',
-  'Airdrops': 'Level49_AirdropsDistribution',
-  'TokenDistribution': 'Level49_AirdropsDistribution',
-  
-  // Level 50: Token Listing
-  'TokenListing': 'Level50_TokenListing',
-  'ListingManagement': 'Level50_TokenListing',
-  
-  // Level 51: Trading Analytics
-  'TradingAnalytics': 'Level51_TradingAnalytics',
-  'TradingStatistics': 'Level51_TradingAnalytics',
-  'TradingCharts': 'Level51_TradingAnalytics',
-  
-  // Level 52: Business Analytics
-  'BusinessAnalytics': 'Level52_BusinessAnalytics',
-  'BusinessMetrics': 'Level52_BusinessAnalytics',
-  'BusinessReporting': 'Level52_BusinessAnalytics',
-  
-  // Level 53: Admin Dashboards
-  'AdminDashboard': 'Level53_AdminDashboards',
-  'AdminDashboards': 'Level53_AdminDashboards',
-  'AdminMonitoring': 'Level53_AdminDashboards',
-  
-  // Level 54: Performance Optimization
-  'PerformanceOptimization': 'Level54_PerformanceOptimization',
-  'PerformanceProfiling': 'Level54_PerformanceOptimization',
-  
-  // Level 55: Data Warehouse & BI
-  'DataWarehouse': 'Level55_DataWarehouse',
-  'DataWarehouseBI': 'Level55_DataWarehouse',
-  'ETL': 'Level55_DataWarehouse',
-  'BusinessIntelligence': 'Level55_DataWarehouse',
-  
-  // Level 56: Fee Management
-  'FeeManagement': 'Level56_FeeManagement',
-  'DynamicFee': 'Level56_FeeManagement',
-  'FeeTiers': 'Level56_FeeManagement',
-  
-  // Level 57: Enhanced Customer Support
-  'CustomerSupport': 'Level57_CustomerSupport',
-  'LiveChat': 'Level57_CustomerSupport',
-  'SupportAutomation': 'Level57_CustomerSupport',
-  
-  // Level 58: Liquidity Management
-  'LiquidityManagement': 'Level58_LiquidityManagement',
-  'LiquidityOptimization': 'Level58_LiquidityManagement',
-  
-  // Level 59: Advanced Market Data
-  'MarketData': 'Level59_MarketData',
-  'AdvancedMarketData': 'Level59_MarketData',
-  'MarketDataAggregation': 'Level59_MarketData',
-  
-  // Level 60: Infrastructure Enhancements
-  'Infrastructure': 'Level60_Infrastructure',
-  'InfrastructureEnhancements': 'Level60_Infrastructure',
-  'AutoScaling': 'Level60_Infrastructure',
-  'BackupRecovery': 'Level60_Infrastructure',
-  
-  // Controllers (map to their respective levels)
-  'Controllers': 'Level9_TradingControllers', // Default to trading controllers, but will be refined
-  'CONTROLLERS': 'Level9_TradingControllers',
-  'CONTROLLERS 25+': 'Level9_TradingControllers',
-  
-  // Services groups from diagrams
-  'Services1': 'Level7_TradingEngine',
-  'CORE SERVICES': 'Level7_TradingEngine',
-  'Core Services': 'Level7_TradingEngine',
-  'Services2': 'Level5_WalletServices',
-  'WALLET SERVICES': 'Level5_WalletServices',
-  'Wallet Services': 'Level5_WalletServices',
-  'Services3': 'Level3_CustomerIdentity',
-  'IDENTITY KYC': 'Level3_CustomerIdentity',
-  'Identity KYC': 'Level3_CustomerIdentity',
-  'Services4': 'Level4_Notifications',
-  'NOTIFICATIONS': 'Level4_Notifications',
-  'Notifications': 'Level4_Notifications',
-  'Services5': 'Level15_SupportContent',
-  'CONTENT SUPPORT': 'Level15_SupportContent',
-  'Content Support': 'Level15_SupportContent',
-  
-  // External services
-  'External': 'Level6_Blockchain', // Default to blockchain, but will be refined
-  'EXTERNAL': 'Level6_Blockchain',
-  
-  // Clients
-  'Clients': 'Level1_ProjectSetup', // Project setup includes client integration
-  'CLIENTS': 'Level1_ProjectSetup',
-  'CLIENTS Web • Mobile • ATM': 'Level1_ProjectSetup',
-  
-  // Database
-  'DATABASE 81 TABLES': 'Level2_DatabaseAuth',
-  'Database 81': 'Level2_DatabaseAuth',
-  'DATABASE': 'Level2_DatabaseAuth',
-  
-  // Common abbreviations and variations
-  'Admin': 'Level13_AdminRBAC',
-  'Customer': 'Level3_CustomerIdentity',
-  'Order': 'Level7_TradingEngine',
-  'Trade': 'Level7_TradingEngine',
-  'Wallet': 'Level5_WalletServices',
-  'Market': 'Level8_MarketManagement',
-  'Coin': 'Level8_MarketManagement',
-  'Email': 'Level4_Notifications',
-  'SMS': 'Level4_Notifications',
-  'Notification': 'Level4_Notifications',
-  
-  // Node IDs from diagrams (exact matches)
-  'OrderS': 'Level7_TradingEngine',
-  'TradeS': 'Level7_TradingEngine',
-  'CustomerS': 'Level3_CustomerIdentity',
-  'WalletS': 'Level5_WalletServices',
-  'BalanceS': 'Level5_WalletServices',
-  'DepositS': 'Level5_WalletServices',
-  'WithdrawS': 'Level5_WalletServices',
-  'ApieS': 'Level6_Blockchain',
-  'NetworkS': 'Level6_Blockchain',
-  'PGW': 'Level11_PaymentGateways',
-  'Vandar': 'Level11_PaymentGateways',
-  'Jibit': 'Level11_PaymentGateways',
-  'NextPay': 'Level11_PaymentGateways',
-  'Sadad': 'Level11_PaymentGateways',
-  'Zarinpal': 'Level11_PaymentGateways',
-  'FinoTech': 'Level12_KYCIdentity',
-  'JibitKYC': 'Level12_KYCIdentity',
-  'EmailS': 'Level4_Notifications',
-  'SMSS': 'Level4_Notifications',
-  'NotifS': 'Level4_Notifications',
-  
-  // Controller node IDs
-  'AdminC': 'Level13_AdminRBAC',
-  'RolesC': 'Level13_AdminRBAC',
-  'UserC': 'Level3_CustomerIdentity',
-  'AuthC': 'Level2_DatabaseAuth',
-  'OrderC': 'Level9_TradingControllers',
-  'TradeC': 'Level9_TradingControllers',
-  'MarketC': 'Level8_MarketManagement',
-  'WalletC': 'Level10_WalletController',
-  'DepositC': 'Level5_WalletServices',
-  'ExchangeC': 'Level14_OTCExchange',
-  'CoinC': 'Level8_MarketManagement',
-  'TicketC': 'Level15_SupportContent',
-  'BlogC': 'Level15_SupportContent',
-  'GiftC': 'Level16_Promotional',
-  'RefC': 'Level16_Promotional',
-  
-  // Missing component node IDs (Services)
-  'MarginS': 'Level31_MarginTrading',
-  'FuturesS': 'Level32_FuturesPerpetual',
-  'OptionsS': 'Level33_OptionsTrading',
-  'AdvancedOrders': 'Level34_AdvancedOrderTypes',
-  'TradingBots': 'Level35_TradingBotsAPI',
-  'AML': 'Level36_AMLMonitoring',
-  'Sanctions': 'Level37_SanctionsScreening',
-  'Regulatory': 'Level38_RegulatoryReporting',
-  'Tax': 'Level39_TaxReporting',
-  'Risk': 'Level40_AdvancedRiskManagement',
-  'ColdWallet': 'Level41_ColdWalletManagement',
-  'MultiSig': 'Level42_MultiSignatureWallets',
-  'HSM': 'Level43_HSMIntegration',
-  'AdvancedSec': 'Level44_AdvancedSecurity',
-  'SecMonitoring': 'Level45_SecurityMonitoring',
-  'Staking': 'Level46_StakingServices',
-  'Lending': 'Level47_LendingBorrowing',
-  'Yield': 'Level48_YieldFarming',
-  'Airdrops': 'Level49_AirdropsDistribution',
-  'Listing': 'Level50_TokenListing',
-  'TradingAnalytics': 'Level51_TradingAnalytics',
-  'BusinessAnalytics': 'Level52_BusinessAnalytics',
-  'AdminDash': 'Level53_AdminDashboards',
-  'DataWarehouse': 'Level55_DataWarehouse',
-  'Fees': 'Level56_FeeManagement',
-  'Support': 'Level57_CustomerSupport',
-  'Liquidity': 'Level58_LiquidityManagement',
-  'MarketData': 'Level59_AdvancedMarketData',
-  'Infrastructure': 'Level60_Infrastructure',
-  
-  // Missing component node IDs (Controllers)
-  'MarginC': 'Level31_MarginTrading',
-  'FuturesC': 'Level32_FuturesPerpetual',
-  'OptionsC': 'Level33_OptionsTrading',
-  'TradingBotsC': 'Level35_TradingBotsAPI',
-  'AMLController': 'Level36_AMLMonitoring',
-  'SanctionsC': 'Level37_SanctionsScreening',
-  'RegulatoryC': 'Level38_RegulatoryReporting',
-  'TaxC': 'Level39_TaxReporting',
-  'StakingC': 'Level46_StakingServices',
-  'LendingC': 'Level47_LendingBorrowing',
-  'YieldC': 'Level48_YieldFarming',
-  'ListingC': 'Level50_TokenListing',
-  'AnalyticsC': 'Level51_TradingAnalytics',
-  'DashboardC': 'Level53_AdminDashboards',
-  
-  // Overview diagram nodes
-  'UI': 'Level1_ProjectSetup',
-  'ATM': 'Level17_AdditionalServices',
-  'Gateway': 'Level11_PaymentGateways',
-  'Webhook': 'Level11_PaymentGateways',
-  'JWT': 'Level2_DatabaseAuth',
-  'AuthMgr': 'Level2_DatabaseAuth',
-  'TwoFA': 'Level2_DatabaseAuth',
-  'Blockchain': 'Level6_Blockchain',
-  'PaymentAPI': 'Level11_PaymentGateways',
-  'KYCAPI': 'Level12_KYCIdentity',
-  
-  // Additional common patterns
-  'VandarService': 'Level11_PaymentGateways',
-  'JibitService': 'Level11_PaymentGateways',
-  'NextPayService': 'Level11_PaymentGateways',
-  'SadadService': 'Level11_PaymentGateways',
-  'ZarinpalService': 'Level11_PaymentGateways',
-  'PaymentGateway': 'Level11_PaymentGateways',
-  'PaymentGateway Interface': 'Level11_PaymentGateways',
-  'FinoTechService': 'Level12_KYCIdentity',
-  'CustomerWalletService': 'Level5_WalletServices',
-  'WithdrawalService': 'Level5_WalletServices',
-  'Multi-Chain Support': 'Level6_Blockchain',
-  'Multi-Chain': 'Level6_Blockchain',
-  'Blockchain': 'Level6_Blockchain',
-  'Payment': 'Level11_PaymentGateways',
-  'KYC': 'Level12_KYCIdentity',
-  'Ticket': 'Level15_SupportContent',
-  'Blog': 'Level15_SupportContent',
-  'File': 'Level15_SupportContent',
-  'GiftCode': 'Level16_Promotional',
-  'ReferralCode': 'Level16_Promotional',
-  'Exchange': 'Level14_OTCExchange',
-  'Role': 'Level13_AdminRBAC',
-  'Privilege': 'Level13_AdminRBAC'
-}
+// All node-to-task mappings are loaded from the database - no hardcoded mappings
+// Mappings are seeded via the seed_node_mappings.js script
+// If database is empty, mappings need to be seeded via: node seed_node_mappings.js
+
+// Removed hardcoded NODE_TO_LEVEL_MAPPING - all mappings are now database-driven
+// All mappings are loaded from the database via loadNodeMappingsFromBackend()
 
 // Helper to map node name to Level task
-const mapNodeToLevel = (nodeName) => {
+// This function ONLY uses database mappings - no hardcoded fallback
+const mapNodeToLevel = (nodeName, dbMappings = {}) => {
   if (!nodeName) return null
   
   // Clean the node name more thoroughly
@@ -609,9 +42,28 @@ const mapNodeToLevel = (nodeName) => {
     .replace(/Controller|Service|C|S$/i, '') // Remove common suffixes for matching
     .trim()
   
-  // Try exact match first
-  if (NODE_TO_LEVEL_MAPPING[cleanName]) {
-    return NODE_TO_LEVEL_MAPPING[cleanName]
+  // Only use database mappings - no hardcoded fallback
+  if (!dbMappings || Object.keys(dbMappings).length === 0) {
+    console.warn(`⚠️ No database mappings available for node "${nodeName}". Mappings must be seeded to the database first.`)
+    return null
+  }
+  
+  // Try exact match with cleaned name
+  if (dbMappings[cleanName]) {
+    return dbMappings[cleanName]
+  }
+  
+  // Try exact match with original nodeName
+  if (dbMappings[nodeName]) {
+    return dbMappings[nodeName]
+  }
+  
+  // Try case-insensitive match
+  const lowerName = cleanName.toLowerCase()
+  for (const [key, value] of Object.entries(dbMappings)) {
+    if (key.toLowerCase() === lowerName) {
+      return value
+    }
   }
   
   // Try with original name (before suffix removal)
@@ -622,33 +74,25 @@ const mapNodeToLevel = (nodeName) => {
     .replace(/^Level\s*\d+[:\s]*/i, '')
     .replace(/\s*\[MISSING\]/i, '')
     .trim()
-  if (NODE_TO_LEVEL_MAPPING[originalName]) {
-    return NODE_TO_LEVEL_MAPPING[originalName]
-  }
-  
-  // Try case-insensitive match
-  const lowerName = cleanName.toLowerCase()
-  for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
-    if (key.toLowerCase() === lowerName) {
-      return level
-    }
+  if (dbMappings[originalName]) {
+    return dbMappings[originalName]
   }
   
   // Try removing spaces and matching
   const noSpaces = cleanName.replace(/\s+/g, '')
-  if (NODE_TO_LEVEL_MAPPING[noSpaces]) {
-    return NODE_TO_LEVEL_MAPPING[noSpaces]
+  if (dbMappings[noSpaces]) {
+    return dbMappings[noSpaces]
   }
   
   // Try with common suffixes added
   const withService = cleanName + 'Service'
   const withController = cleanName + 'Controller'
-  if (NODE_TO_LEVEL_MAPPING[withService]) return NODE_TO_LEVEL_MAPPING[withService]
-  if (NODE_TO_LEVEL_MAPPING[withController]) return NODE_TO_LEVEL_MAPPING[withController]
+  if (dbMappings[withService]) return dbMappings[withService]
+  if (dbMappings[withController]) return dbMappings[withController]
   
   // Try partial match (contains) - but prioritize longer matches
   const matchingEntries = []
-  for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
+  for (const [key, level] of Object.entries(dbMappings)) {
     const keyLower = key.toLowerCase()
     if (lowerName.includes(keyLower) || keyLower.includes(lowerName)) {
       matchingEntries.push({ key, level, length: key.length })
@@ -660,60 +104,8 @@ const mapNodeToLevel = (nodeName) => {
     return matchingEntries[0].level
   }
   
-  // Try matching controller/service patterns
-  if (cleanName.includes('Controller') || cleanName.endsWith('C')) {
-    const baseName = cleanName.replace(/Controller|C$/i, '').trim()
-    // Try direct mapping of base name in NODE_TO_LEVEL_MAPPING
-    if (NODE_TO_LEVEL_MAPPING[baseName]) {
-      return NODE_TO_LEVEL_MAPPING[baseName]
-    }
-    // Try case-insensitive match
-    const baseLower = baseName.toLowerCase()
-    for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
-      if (key.toLowerCase() === baseLower) {
-        return level
-      }
-    }
-    // Map common controllers
-    if (baseName === 'Admin') return 'Level13_AdminRBAC'
-    if (baseName === 'Customer') return 'Level3_CustomerIdentity'
-    if (baseName === 'Order') return 'Level9_TradingControllers'
-    if (baseName === 'Trade') return 'Level9_TradingControllers'
-    if (baseName === 'Wallet') return 'Level10_WalletController'
-    if (baseName === 'Market' || baseName === 'Coin') return 'Level8_MarketManagement'
-    if (baseName === 'Ticket' || baseName === 'Blog') return 'Level15_SupportContent'
-    if (baseName === 'GiftCode' || baseName === 'ReferralCode') return 'Level16_Promotional'
-    if (baseName === 'ExchangeAction') return 'Level14_OTCExchange'
-    if (baseName === 'Roles') return 'Level13_AdminRBAC'
-  }
-  
-  if (cleanName.includes('Service') || cleanName.endsWith('S')) {
-    const baseName = cleanName.replace(/Service|S$/i, '').trim()
-    // Try direct mapping of base name in NODE_TO_LEVEL_MAPPING
-    if (NODE_TO_LEVEL_MAPPING[baseName]) {
-      return NODE_TO_LEVEL_MAPPING[baseName]
-    }
-    // Try case-insensitive match
-    const baseLower = baseName.toLowerCase()
-    for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
-      if (key.toLowerCase() === baseLower) {
-        return level
-      }
-    }
-    // Map common services
-    if (baseName === 'Customer') return 'Level3_CustomerIdentity'
-    if (baseName === 'Order' || baseName === 'Trade') return 'Level7_TradingEngine'
-    if (baseName === 'Wallet' || baseName === 'CustomerWallet' || baseName === 'Deposit' || baseName === 'Withdrawal') return 'Level5_WalletServices'
-    if (baseName === 'Market' || baseName === 'Coin') return 'Level8_MarketManagement'
-    if (baseName === 'Email' || baseName === 'SMS' || baseName === 'Notification') return 'Level4_Notifications'
-    if (baseName === 'Apie') return 'Level6_Blockchain'
-    if (baseName === 'Ticket' || baseName === 'Blog' || baseName === 'File') return 'Level15_SupportContent'
-    if (baseName === 'GiftCode' || baseName === 'ReferralCode') return 'Level16_Promotional'
-    if (baseName === 'FinoTech' || baseName === 'Jibit' || baseName === 'BankAccount') return 'Level12_KYCIdentity'
-    if (baseName === 'Admin' || baseName === 'Role') return 'Level13_AdminRBAC'
-    if (baseName === 'ExchangeAction') return 'Level14_OTCExchange'
-  }
-  
+  // No match found in database mappings
+  console.warn(`⚠️ Could not map node "${nodeName}" to any Level task. Ensure mappings are seeded in the database.`)
   return null
 }
 
@@ -1423,10 +815,12 @@ export const TodoProvider = ({ children }) => {
   const [loading, setLoading] = useState(false)
   const [useBackend, setUseBackend] = useState(true) // Always use backend - tasks stored in database only
   const [backendError, setBackendError] = useState(null)
+  const [nodeMappings, setNodeMappings] = useState({}) // Database-driven node-to-task mappings
 
   // Load tasks from backend on mount
   useEffect(() => {
     loadTasksFromBackend()
+    loadNodeMappingsFromBackend()
     
     // Also seed all diagrams and nodes on startup if needed
     const seedDiagramsOnStartup = async () => {
@@ -1482,6 +876,22 @@ export const TodoProvider = ({ children }) => {
       const backendTasks = await response.json()
       
       // Transform backend tasks and check for missing priorities
+      // Deduplicate by nodeId - keep only the most recent task for each nodeId
+      const tasksByNodeId = new Map()
+      backendTasks.forEach(bt => {
+        const existing = tasksByNodeId.get(bt.nodeId)
+        if (!existing || new Date(bt.updatedAt || bt.createdAt) > new Date(existing.updatedAt || existing.createdAt)) {
+          tasksByNodeId.set(bt.nodeId, bt)
+        }
+      })
+      
+      const uniqueTasks = Array.from(tasksByNodeId.values())
+      
+      // Log if duplicates were found
+      if (uniqueTasks.length < backendTasks.length) {
+        console.warn(`⚠️ Found ${backendTasks.length - uniqueTasks.length} duplicate tasks. Using most recent version of each.`)
+      }
+      
       const transformedTasks = {}
       const tasksNeedingPriorityUpdate = []
       
@@ -1554,7 +964,8 @@ export const TodoProvider = ({ children }) => {
         'Level60': TaskPriority.LOW,
       }
       
-      backendTasks.forEach(bt => {
+      // Process unique tasks only (deduplicated)
+      uniqueTasks.forEach(bt => {
         const transformed = transformBackendTask(bt)
         
         // EVERY task MUST have a priority - set it if missing or incorrect
@@ -1663,6 +1074,29 @@ export const TodoProvider = ({ children }) => {
       setTasks({})
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadNodeMappingsFromBackend = async () => {
+    try {
+      const { API_ENDPOINTS } = await import('../config/api')
+      if (!API_ENDPOINTS.nodeMappings) {
+        console.error('❌ Backend not available - node mappings API endpoint not configured')
+        return
+      }
+      
+      const response = await fetch(API_ENDPOINTS.nodeMappings)
+      if (!response.ok) {
+        console.error(`❌ Failed to load node mappings from database (HTTP ${response.status}). Please seed mappings using: node seed_node_mappings.js`)
+        return
+      }
+      
+      const mappings = await response.json()
+      console.log(`✅ Loaded ${Object.keys(mappings).length} node-to-task mappings from database`)
+      setNodeMappings(mappings)
+    } catch (error) {
+      console.error('❌ Error loading node mappings from database:', error)
+      console.error('   Please ensure backend is running and mappings are seeded: node seed_node_mappings.js')
     }
   }
   
@@ -2032,7 +1466,8 @@ export const TodoProvider = ({ children }) => {
     }
     
     // IMPORTANT: Map diagram nodes to Level tasks instead of creating new tasks
-    const mappedLevel = mapNodeToLevel(taskId)
+    // Use database mappings first, then fallback to hardcoded
+    const mappedLevel = mapNodeToLevel(taskId, nodeMappings)
     if (mappedLevel && tasks[mappedLevel]) {
       console.log(`Mapped diagram node "${taskId}" to Level task: ${mappedLevel}`)
       return tasks[mappedLevel]
@@ -2046,7 +1481,7 @@ export const TodoProvider = ({ children }) => {
     
     // Try mapping the base name to a Level task
     if (baseName) {
-      const baseMappedLevel = mapNodeToLevel(baseName)
+      const baseMappedLevel = mapNodeToLevel(baseName, nodeMappings)
       if (baseMappedLevel && tasks[baseMappedLevel]) {
         console.log(`Mapped base name "${baseName}" to Level task: ${baseMappedLevel}`)
         return tasks[baseMappedLevel]
@@ -2195,7 +1630,8 @@ export const TodoProvider = ({ children }) => {
     getProgress,
     getCategoryProgress,
     getOrCreateTask,
-    mapNodeToLevel,
+    mapNodeToLevel: (nodeName) => mapNodeToLevel(nodeName, nodeMappings),
+    nodeMappings,
     cleanupOldTasks,
     showTodoPanel,
     setShowTodoPanel,
@@ -2225,5 +1661,6 @@ export const useTodoStore = () => {
   return context
 }
 
-// Export mapNodeToLevel and NODE_TO_LEVEL_MAPPING for use in other modules
-export { mapNodeToLevel, NODE_TO_LEVEL_MAPPING }
+// Export mapNodeToLevel for use in other modules
+// Note: NODE_TO_LEVEL_MAPPING is no longer exported - all mappings are database-driven
+export { mapNodeToLevel }

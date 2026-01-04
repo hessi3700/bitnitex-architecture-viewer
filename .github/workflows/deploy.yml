@@ -50,12 +50,6 @@ jobs:
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
         run: npm run build
 
-      - name: Disable Jekyll processing
-        run: |
-          # Create .nojekyll file in dist to prevent GitHub Pages from using Jekyll
-          touch dist/.nojekyll
-          echo ".nojekyll file created to disable Jekyll processing"
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -67,5 +61,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+
 
 

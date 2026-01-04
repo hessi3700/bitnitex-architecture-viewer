@@ -30,7 +30,7 @@ export class CreateTaskDto {
 
   @IsArray()
   @IsOptional()
-  subtasks?: string[]
+  subtasks?: any[] // Accept array of objects or strings - will be JSON stringified
 
   @IsArray()
   @IsOptional()

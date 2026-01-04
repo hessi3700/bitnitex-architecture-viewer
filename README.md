@@ -28,20 +28,58 @@ An interactive, professional React-based architecture diagram viewer for explori
 - Add node details via `nodeDetails.js`
 - Mermaid-based diagrams (industry standard)
 
+## Quick Start (Single Command)
+
+Run the entire project (frontend + backend) with one command:
+
+```bash
+npm start
+```
+
+This will:
+- Install all dependencies (frontend and backend) if needed
+- Start the backend API server on http://localhost:3001
+- Start the frontend dev server on http://localhost:3000
+- Open the frontend automatically in your browser
+
+**Alternative:** Use the shell script:
+```bash
+chmod +x run.sh
+./run.sh
+```
+
 ## Installation
+
+For manual setup:
 
 ```bash
 cd diagram
+npm install
+cd backend
 npm install
 ```
 
 ## Development
 
+**Run everything (recommended):**
+```bash
+npm start
+```
+
+**Or run separately:**
+
+Frontend only:
 ```bash
 npm run dev
 ```
 
-Open http://localhost:3000 in your browser.
+Backend only:
+```bash
+cd backend
+npm run start:dev
+```
+
+The frontend will open automatically at http://localhost:3000, and the backend API will be available at http://localhost:3001.
 
 ## Building for Production
 
@@ -160,6 +198,8 @@ export const nodeDetails = {
 ## License
 
 Private - Arnitex Internal Use Only
+
+
 
 
 

@@ -28,6 +28,42 @@ export class TasksController {
     return this.tasksService.findByNodeId(nodeId)
   }
 
+  @Get('level-only')
+  findAllLevelTasksOnly() {
+    return this.tasksService.findAllLevelTasksOnly()
+  }
+
+  @Post('seed')
+  @HttpCode(HttpStatus.CREATED)
+  seedTasks(@Body() tasks: CreateTaskDto[]) {
+    return this.tasksService.seedTasks(tasks)
+  }
+
+  @Post('seed-all-60')
+  @HttpCode(HttpStatus.CREATED)
+  async seedAll60Tasks(@Body() tasks: CreateTaskDto[]) {
+    // Seed all 60 Level tasks at once
+    return this.tasksService.seedTasks(tasks)
+  }
+
+  @Post('seed-all')
+  @HttpCode(HttpStatus.CREATED)
+  seedAllTasks() {
+    return this.tasksService.seedAllLevelTasks()
+  }
+
+  @Delete('cleanup')
+  @HttpCode(HttpStatus.OK)
+  cleanupNonLevelTasks() {
+    return this.tasksService.cleanupNonLevelTasks()
+  }
+
+  @Delete('remove-duplicates')
+  @HttpCode(HttpStatus.OK)
+  removeDuplicates() {
+    return this.tasksService.removeDuplicateTasks()
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id)
@@ -42,18 +78,6 @@ export class TasksController {
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(@Param('id') id: string) {
     return this.tasksService.remove(id)
-  }
-
-  @Post('seed')
-  @HttpCode(HttpStatus.CREATED)
-  seedTasks(@Body() tasks: CreateTaskDto[]) {
-    return this.tasksService.seedTasks(tasks)
-  }
-
-  @Post('seed-all')
-  @HttpCode(HttpStatus.CREATED)
-  seedAllTasks() {
-    return this.tasksService.seedAllLevelTasks()
   }
 }
 

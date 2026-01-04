@@ -562,21 +562,30 @@
 }
 
 .subtask-ai-btn {
-  padding: 4px 12px;
+  padding: 6px 14px;
   background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   color: #fff;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .subtask-ai-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+  background: linear-gradient(135deg, #9d6af7 0%, #8c4af0 100%);
+}
+
+.subtask-ai-btn:active {
+  transform: translateY(0);
 }
 
 .subtask-ai-prompt {

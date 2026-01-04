@@ -1,65 +1,44 @@
 import { API_ENDPOINTS } from '../config/api'
 import { diagramRegistry } from '../data/diagramRegistry'
 
-// Map node name to Level task - uses full mapping from TodoStore
-// Import it directly since it's now exported
+// Map node name to Level task - uses database-driven mapping from TodoStore
 let mapNodeToLevelFunction = null
-let NODE_TO_LEVEL_MAPPING_REF = null
 
 // Initialize mapping from TodoStore
 const initializeMapping = async () => {
-  if (mapNodeToLevelFunction && NODE_TO_LEVEL_MAPPING_REF) return
+  if (mapNodeToLevelFunction) return
   
   try {
-    // Import TodoStore to get the full mapping
+    // Import TodoStore to get the mapping function
     const todoStoreModule = await import('../store/TodoStore')
     if (todoStoreModule.mapNodeToLevel) {
       mapNodeToLevelFunction = todoStoreModule.mapNodeToLevel
-    }
-    if (todoStoreModule.NODE_TO_LEVEL_MAPPING) {
-      NODE_TO_LEVEL_MAPPING_REF = todoStoreModule.NODE_TO_LEVEL_MAPPING
     }
   } catch (error) {
     console.warn('Could not import mapping from TodoStore:', error)
   }
 }
 
-// Map node name to Level task - uses full mapping
-const mapNodeNameToTask = async (nodeName) => {
+// Map node name to Level task - uses database-driven mapping
+// Note: This function requires nodeMappings to be passed from TodoStore
+// The actual mapping is done by mapNodeToLevel in TodoStore which uses database mappings
+const mapNodeNameToTask = async (nodeName, nodeMappings = {}) => {
   if (!nodeName) return null
   
   await initializeMapping()
   
-  // Use the full mapNodeToLevel function if available
+  // Use the mapNodeToLevel function with database mappings
   if (mapNodeToLevelFunction) {
-    return mapNodeToLevelFunction(nodeName)
+    return mapNodeToLevelFunction(nodeName, nodeMappings)
   }
   
-  // Fallback to direct mapping lookup
-  const cleanName = nodeName
-    .replace(/[✅🔄⏸️🚫🚀🌐🔐🎛️⚙️💰👤📧🎫⛓️💳💾]/g, '')
-    .replace(/<br\s*\/?>/gi, ' ')
-    .trim()
-  
-  if (NODE_TO_LEVEL_MAPPING_REF && NODE_TO_LEVEL_MAPPING_REF[cleanName]) {
-    return NODE_TO_LEVEL_MAPPING_REF[cleanName]
-  }
-  
-  // Try case-insensitive
-  const lowerName = cleanName.toLowerCase()
-  if (NODE_TO_LEVEL_MAPPING_REF) {
-    for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING_REF)) {
-      if (key.toLowerCase() === lowerName) {
-        return level
-      }
-    }
-  }
-  
+  console.warn(`⚠️ mapNodeToLevel function not available. Node "${nodeName}" cannot be mapped.`)
   return null
 }
 
 // Extract nodes from Mermaid code
-export const extractNodesFromMermaid = async (mermaidCode, diagramId) => {
+// nodeMappings: Optional database-driven node-to-task mappings from TodoStore
+export const extractNodesFromMermaid = async (mermaidCode, diagramId, nodeMappings = {}) => {
   const nodes = []
   const nodeIdSet = new Set()
   
@@ -94,11 +73,12 @@ export const extractNodesFromMermaid = async (mermaidCode, diagramId) => {
       if (!label || label.match(/^flowchart[_-]/i)) continue
       
       // Try to map to a Level task - CRITICAL: every node MUST have a taskNodeId
-      let taskNodeId = await mapNodeNameToTask(label || nodeId)
+      // Use database mappings if available
+      let taskNodeId = await mapNodeNameToTask(label || nodeId, nodeMappings)
       
       // If no mapping found, try with nodeId
       if (!taskNodeId) {
-        taskNodeId = await mapNodeNameToTask(nodeId)
+        taskNodeId = await mapNodeNameToTask(nodeId, nodeMappings)
       }
       
       // If still no mapping, use fallback based on keywords
@@ -187,53 +167,7 @@ export const extractNodesFromMermaid = async (mermaidCode, diagramId) => {
   return nodes
 }
 
-// Map node name to Level task
-const mapNodeToTask = (nodeName) => {
-  if (!nodeName) return null
-  
-  // Clean the node name
-  const cleanName = nodeName
-    .replace(/[✅🔄⏸️🚫]/g, '') // Remove status emojis
-    .replace(/<br\s*\/?>/gi, ' ') // Replace <br/> with space
-    .trim()
-  
-  // Direct match
-  if (NODE_TO_LEVEL_MAPPING[cleanName]) {
-    return NODE_TO_LEVEL_MAPPING[cleanName]
-  }
-  
-  // Case-insensitive match
-  const lowerName = cleanName.toLowerCase()
-  for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
-    if (key.toLowerCase() === lowerName) {
-      return level
-    }
-  }
-  
-  // Partial match
-  for (const [key, level] of Object.entries(NODE_TO_LEVEL_MAPPING)) {
-    if (lowerName.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerName)) {
-      return level
-    }
-  }
-  
-  // Try common patterns
-  if (cleanName.endsWith('Controller')) {
-    const baseName = cleanName.replace('Controller', '')
-    if (NODE_TO_LEVEL_MAPPING[baseName]) {
-      return NODE_TO_LEVEL_MAPPING[baseName]
-    }
-  }
-  
-  if (cleanName.endsWith('Service')) {
-    const baseName = cleanName.replace('Service', '')
-    if (NODE_TO_LEVEL_MAPPING[baseName]) {
-      return NODE_TO_LEVEL_MAPPING[baseName]
-    }
-  }
-  
-  return null
-}
+// Removed mapNodeToTask - use mapNodeNameToTask instead which uses database mappings
 
 // Infer node type from label
 const inferNodeType = (label) => {
@@ -480,15 +414,50 @@ export const seedDiagramsAndNodes = async () => {
   }
 }
 
-// Load edges for a diagram
+// Load edges for a diagram from Edge entity table
 export const loadEdgesFromBackend = async (diagramId) => {
   try {
     const { API_ENDPOINTS } = await import('../config/api')
     
+    // Load diagram with edgeEntities relation
     const response = await fetch(API_ENDPOINTS.diagramByDiagramId(diagramId))
     if (response.ok) {
       const diagram = await response.json()
-      return diagram.edges || []
+      
+      // Priority: Use edgeEntities from database (proper Edge entities)
+      if (diagram.edgeEntities && Array.isArray(diagram.edgeEntities) && diagram.edgeEntities.length > 0) {
+        console.log(`✅ Loaded ${diagram.edgeEntities.length} edges from Edge entity table`)
+        // Transform Edge entities to match expected format
+        return diagram.edgeEntities.map(edge => ({
+          id: edge.id,
+          source: edge.sourceNodeId,
+          target: edge.targetNodeId,
+          sourceNodeId: edge.sourceNodeId,
+          targetNodeId: edge.targetNodeId,
+          label: edge.label || null,
+          type: edge.type || 'directed',
+          style: edge.style || {},
+          metadata: {
+            ...edge.metadata,
+            // Edge paths/positions can be stored in style or metadata
+            path: edge.style?.path || edge.metadata?.path || null,
+            waypoints: edge.style?.waypoints || edge.metadata?.waypoints || null
+          },
+          diagramId: edge.diagramId
+        }))
+      }
+      
+      // Fallback: Extract edges from Mermaid code (not from legacy JSON field)
+      const mermaidCode = diagram.customMermaidCode || diagram.mermaidCode || ''
+      if (mermaidCode) {
+        const extractedEdges = extractEdgesFromMermaid(mermaidCode)
+        if (extractedEdges.length > 0) {
+          console.log(`✅ Extracted ${extractedEdges.length} edges from Mermaid code`)
+          return extractedEdges
+        }
+      }
+      
+      return []
     }
     
     return []
@@ -501,35 +470,83 @@ export const loadEdgesFromBackend = async (diagramId) => {
 // Load all diagrams from database
 export const loadAllDiagramsFromBackend = async () => {
   try {
-    const { API_ENDPOINTS } = await import('../config/api')
+    const { API_ENDPOINTS, isBackendAvailable } = await import('../config/api')
     
-    const response = await fetch(API_ENDPOINTS.diagrams)
-    if (response.ok) {
-      const diagrams = await response.json()
-      // Transform database diagrams to match registry format
-      return diagrams.map(diagram => ({
-        id: diagram.diagramId,
-        title: diagram.title,
-        subtitle: diagram.description || '',
-        icon: diagram.metadata?.icon || '📊',
-        type: diagram.metadata?.type || 'detail',
-        description: diagram.description || '',
-        code: diagram.mermaidCode || diagram.customMermaidCode || '',
-        children: diagram.metadata?.children || [],
-        parent: diagram.metadata?.parent || null,
-        // Include database fields
-        dbId: diagram.id,
-        customMermaidCode: diagram.customMermaidCode,
-        nodes: diagram.nodes,
-        edges: diagram.edges,
-        metadata: diagram.metadata
-      }))
+    // Check if backend is available
+    if (!isBackendAvailable() || !API_ENDPOINTS.diagrams) {
+      console.error('❌ Backend not available - API_ENDPOINTS.diagrams is null')
+      throw new Error('Backend API not configured. Please ensure backend is running on http://localhost:3001')
     }
     
-    return []
+    console.log('📡 Fetching diagrams from:', API_ENDPOINTS.diagrams)
+    
+    let response
+    try {
+      response = await fetch(API_ENDPOINTS.diagrams, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Add mode to handle CORS
+        mode: 'cors',
+        credentials: 'omit',
+      })
+    } catch (fetchError) {
+      console.error('❌ Fetch error (network/CORS):', fetchError)
+      throw new Error(`Network error: ${fetchError.message}. Check if backend is running and CORS is configured.`)
+    }
+    
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Could not read error response')
+      console.error(`❌ Failed to load diagrams: HTTP ${response.status}`, errorText)
+      throw new Error(`Backend returned ${response.status}: ${errorText.substring(0, 100)}`)
+    }
+    
+    let diagrams
+    try {
+      diagrams = await response.json()
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON response:', parseError)
+      const text = await response.text()
+      console.error('Response text:', text.substring(0, 200))
+      throw new Error(`Invalid JSON response from backend: ${parseError.message}`)
+    }
+    
+    console.log(`✅ Received ${diagrams?.length || 0} diagrams from backend`)
+    
+    if (!Array.isArray(diagrams)) {
+      console.error('❌ Invalid response format - expected array, got:', typeof diagrams)
+      throw new Error('Invalid response format from backend')
+    }
+    
+    // Transform database diagrams to match registry format
+    const transformed = diagrams.map(diagram => ({
+      id: diagram.diagramId,
+      title: diagram.title,
+      subtitle: diagram.description || '',
+      icon: diagram.metadata?.icon || '📊',
+      type: diagram.metadata?.type || 'detail',
+      description: diagram.description || '',
+      code: diagram.mermaidCode || diagram.customMermaidCode || '',
+      children: diagram.metadata?.children || [],
+      parent: diagram.metadata?.parent || null,
+      // Include database fields
+      dbId: diagram.id,
+      customMermaidCode: diagram.customMermaidCode,
+      nodes: diagram.nodes,
+      edges: diagram.edges,
+      metadata: diagram.metadata
+    }))
+    
+    console.log(`✅ Transformed ${transformed.length} diagrams`)
+    return transformed
   } catch (error) {
-    console.error('Failed to load diagrams from backend:', error)
-    return []
+    console.error('❌ Failed to load diagrams from backend:', error)
+    // Re-throw with more context
+    if (error.message) {
+      throw error
+    }
+    throw new Error(`Failed to connect to backend: ${error.message || error}`)
   }
 }
 
