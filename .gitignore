@@ -35,3 +35,4 @@ yarn-error.log*
 #custom
 ENABLE_ACTIONS.md
 DEPLOYMENT.md
+GITHUB_SSH_KEY.txt
