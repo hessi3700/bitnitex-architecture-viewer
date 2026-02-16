@@ -811,6 +811,22 @@
   height: 100%;
   overflow: auto;
   cursor: grab;
+  /* Hide scrollbars; pan still works via drag, wheel only zooms */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.canvas-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.canvas-viewport-inner {
+  min-width: 100%;
+  min-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  box-sizing: border-box;
 }
 
 .canvas-viewport.dragging {
@@ -820,6 +836,7 @@
 .canvas-content {
   min-width: 100%;
   min-height: 100%;
+  margin: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;

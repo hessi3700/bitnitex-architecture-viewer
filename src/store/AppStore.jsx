@@ -65,6 +65,7 @@ export const AppProvider = ({ children }) => {
     selectedNode,
     breadcrumbs,
     zoomLevel,
+    setZoomLevel,
     showMinimap,
     sidebarCollapsed,
     isFullscreen,

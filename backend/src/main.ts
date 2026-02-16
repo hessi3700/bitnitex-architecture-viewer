@@ -10,10 +10,12 @@ async function bootstrap() {
   app.use(json({ limit: '10mb' }))
   app.use(urlencoded({ limit: '10mb', extended: true }))
   
-  // Enable CORS for frontend - allow all origins in development for local network access
+  // CORS: use FRONTEND_URL in production; else allow all origins (dev)
+  const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN
+  const corsOrigin = frontendUrl ? frontendUrl.split(',').map((s) => s.trim()) : '*'
   app.enableCors({
-    origin: '*', // Allow all origins - change to specific origins in production
-    credentials: false, // Set to false when using origin: '*'
+    origin: corsOrigin,
+    credentials: corsOrigin !== '*',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
     exposedHeaders: ['Content-Type', 'Authorization'],

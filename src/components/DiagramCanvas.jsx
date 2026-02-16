@@ -103,7 +103,7 @@ mermaid.initialize({
 })
 
 const DiagramCanvas = () => {
-  const { currentView, zoomLevel, setSelectedNode, navigateToView, showApiTester, isEditMode, setIsEditMode } = useAppStore()
+  const { currentView, zoomLevel, setZoomLevel, setSelectedNode, navigateToView, showApiTester, isEditMode, setIsEditMode } = useAppStore()
   const { tasks, setShowTodoPanel, setSelectedTask, getOrCreateTask, mapNodeToLevel, nodeMappings } = useTodoStore()
   const containerRef = useRef(null)
   const viewportRef = useRef(null)
@@ -219,7 +219,24 @@ const DiagramCanvas = () => {
       window.removeEventListener('diagram-saved', handleDiagramSaved)
     }
   }, [currentView])
-  
+
+  // Non-passive wheel listener so preventDefault stops page/sidebar scroll; zoom only
+  const zoomRef = useRef({ zoomLevel, setZoomLevel })
+  zoomRef.current = { zoomLevel, setZoomLevel }
+  useEffect(() => {
+    const el = viewportRef.current
+    if (!el) return
+    const onWheel = (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      document.querySelectorAll('.diagram-tooltip').forEach(t => t.remove())
+      const delta = e.deltaY > 0 ? -0.1 : 0.1
+      zoomRef.current.setZoomLevel(prev => Math.max(0.3, Math.min(3, prev + delta)))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [])
+
   // Auto-save diagram and extract nodes
   const autoSaveDiagram = async (diagramId) => {
     try {
@@ -2423,43 +2440,6 @@ const DiagramCanvas = () => {
     }
   }
 
-  // Enhanced zoom with mouse wheel (Ctrl/Cmd + Wheel or just Wheel)
-  const handleWheel = (e) => {
-    // Clean up tooltips when scrolling
-    document.querySelectorAll('.diagram-tooltip').forEach(t => t.remove())
-    
-    // Zoom with Ctrl/Cmd + Wheel or just Wheel (if not over a node)
-    if (e.ctrlKey || e.metaKey || !e.target.closest('g[id*="flowchart"], g[id*="graph"]')) {
-      e.preventDefault()
-      
-      const delta = e.deltaY > 0 ? -0.1 : 0.1
-      const newZoom = Math.max(0.3, Math.min(3, zoomLevel + delta))
-      
-      // Zoom towards mouse position
-      if (viewportRef.current && containerRef.current) {
-        const rect = viewportRef.current.getBoundingClientRect()
-        const mouseX = e.clientX - rect.left
-        const mouseY = e.clientY - rect.top
-        
-        const zoomChange = newZoom / zoomLevel
-        const scrollX = (mouseX - viewportRef.current.scrollLeft) * (1 - zoomChange)
-        const scrollY = (mouseY - viewportRef.current.scrollTop) * (1 - zoomChange)
-        
-        setZoomLevel(newZoom)
-        
-        // Adjust scroll to zoom towards mouse position
-        setTimeout(() => {
-          if (viewportRef.current) {
-            viewportRef.current.scrollLeft += scrollX
-            viewportRef.current.scrollTop += scrollY
-          }
-        }, 0)
-      } else {
-        setZoomLevel(newZoom)
-      }
-    }
-  }
-  
   // Pan with middle mouse button or space + drag
   const handlePanStart = (e) => {
     // Middle mouse button (button 1) or space key + mouse
@@ -3278,7 +3258,6 @@ const DiagramCanvas = () => {
   return (
     <div 
       className={`diagram-canvas ${isEditMode ? 'edit-mode' : ''} ${isConnecting ? 'is-connecting' : ''} ${isMoving ? 'is-moving' : ''}`}
-      onWheel={handleWheel}
     >
       {/* Edit Mode Toolbar */}
       {isEditMode && (
@@ -3489,7 +3468,6 @@ const DiagramCanvas = () => {
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
         onContextMenu={(e) => e.preventDefault()} // Prevent context menu on right click
         style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
       >
@@ -3497,7 +3475,7 @@ const DiagramCanvas = () => {
           className="canvas-content"
           style={{ 
             transform: `scale(${zoomLevel})`,
-            transformOrigin: '0 0',
+            transformOrigin: '50% 50%',
             transition: isPanning ? 'none' : 'transform 0.1s ease-out'
           }}
         >
