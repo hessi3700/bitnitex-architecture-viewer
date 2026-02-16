@@ -24,3 +24,4 @@ fi
 echo "🎯 Starting frontend and backend servers..."
 npx concurrently "npm run dev" "cd backend && npm run start:dev"
 
+
