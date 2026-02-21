@@ -35,6 +35,15 @@ const Toolbar = () => {
 
   return (
     <div className="toolbar">
+      <button
+        type="button"
+        className="toolbar-menu-btn"
+        onClick={toggleSidebar}
+        title="Open menu"
+        aria-label="Open menu"
+      >
+        <span className="toolbar-btn-icon">☰</span>
+      </button>
       <div className="toolbar-title">
         <div className="breadcrumb">
           {breadcrumbs.map((crumb, index) => (

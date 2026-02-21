@@ -16,7 +16,7 @@ export const AppProvider = ({ children }) => {
   const [breadcrumbs, setBreadcrumbs] = useState(['Overview'])
   const [zoomLevel, setZoomLevel] = useState(1)
   const [showMinimap, setShowMinimap] = useState(true)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 768)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showApiTester, setShowApiTester] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)

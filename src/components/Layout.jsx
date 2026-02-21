@@ -9,11 +9,16 @@ import TodoPanel from './TodoPanel'
 import ApiTester from './ApiTester'
 
 const Layout = () => {
-  const { sidebarCollapsed, selectedNode, isFullscreen, showApiTester } = useAppStore()
+  const { sidebarCollapsed, selectedNode, isFullscreen, showApiTester, toggleSidebar } = useAppStore()
 
   return (
-    <div className={`app-container ${isFullscreen ? 'fullscreen-mode' : ''}`}>
-      {!isFullscreen && <Sidebar />}
+    <div className={`app-container ${isFullscreen ? 'fullscreen-mode' : ''} ${!sidebarCollapsed ? 'sidebar-open' : ''}`}>
+      {!isFullscreen && (
+        <>
+          <div className="sidebar-backdrop" onClick={toggleSidebar} aria-hidden="true" />
+          <Sidebar />
+        </>
+      )}
       <main className="main-content">
         {!isFullscreen && <Toolbar />}
         <DiagramCanvas />
