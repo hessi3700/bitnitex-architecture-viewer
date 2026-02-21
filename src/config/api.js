@@ -1,32 +1,21 @@
 // API Configuration
-// In production (GitHub Pages), if no backend URL is provided, the app will use localStorage
-// Set VITE_API_URL environment variable to your backend URL if you have one deployed
+// - npm run start / dev: always uses local backend (http://localhost:3001)
+// - Production build: uses VITE_API_URL from .env (e.g. Worker URL) or null for static only
 const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_URL
-  
-  // If explicitly set (even if empty string), use it
-  if (import.meta.env.VITE_API_URL !== undefined) {
-    return envUrl || null
-  }
-  
-  // In development, auto-detect server IP for local network access
+  // In development (npm run start), always use local backend
   if (import.meta.env.DEV) {
-    // If accessed via IP address (not localhost), use that same IP for backend
-    // This allows friends on local network to connect automatically
     const hostname = window.location.hostname
-    const port = window.location.port || '5173' // Default Vite dev server port
-    
-    // Check if we're accessing via IP address (not localhost/127.0.0.1)
     if (hostname && hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      // Use the same hostname but with backend port (3001)
       return `http://${hostname}:3001`
     }
-    
-    // Default to localhost for local development
     return 'http://localhost:3001'
   }
-  
-  // In production without explicit URL, return null (will use localStorage)
+
+  // Production: use VITE_API_URL if set (e.g. Worker), otherwise null
+  const envUrl = import.meta.env.VITE_API_URL
+  if (envUrl !== undefined && envUrl !== '') {
+    return envUrl
+  }
   return null
 }
 

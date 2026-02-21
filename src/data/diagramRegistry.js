@@ -1,5 +1,76 @@
 // Central registry for all diagrams - easily extensible
 export const diagramRegistry = {
+  vpn: {
+    id: 'vpn',
+    title: 'VPN Architecture (User → Iran VPS → Starlink → Germany → Internet)',
+    subtitle: 'Reality + Starlink + WireGuard',
+    icon: '🔐',
+    type: 'composite',
+    description: 'User in Iran connects via Reality to Iran VPS, then through Starlink PC to Germany VPS and out to the internet. Auth and key management in control plane.',
+    children: [],
+    code: `%%{init: {'theme': 'dark', 'flowchart': {'curve': 'basis'}}}%%
+flowchart TD
+    subgraph Iran_VPS["🇮🇷 Iran VPS (ParsPack)"]
+        direction TB
+        Web["🌐 Decoy Shop Website<br/>(Nginx, HTTPS, valid cert)"]
+        XrayIn["📡 Xray Inbound (Reality)<br/>• Port 443 (same as website)<br/>• VLESS + Reality<br/>• Dest: cloudflare.com:443<br/>• TLS fingerprint mimicry"]
+        XrayOut["📤 Xray Outbound (to Starlink PC)<br/>• VLESS + WebSocket + TLS<br/>• WSS on port 443<br/>• Points to Starlink PC public IP"]
+        RouterIran["🔄 Routing Rules<br/>• If dest is website → serve Web<br/>• If dest is proxy → XrayOut"]
+    end
+
+    subgraph User_Space["🧑 User Environment (Iran)"]
+        Client["📱 Client Device<br/>(Phone/PC)"]
+        ClientApp["🛜 Hiddify/Xray Client<br/>• Reality protocol<br/>• TLS 1.3<br/>• Fake SNI: cloudflare.com"]
+        AuthClient["🔑 Auth Module<br/>• Login to Auth Server<br/>• Receives WireGuard keys"]
+    end
+
+    subgraph Starlink_PC["🛰️ Starlink PC (Hidden in Iran)"]
+        direction TB
+        StarlinkDish["📡 Starlink Dish (Gen 2/Mini)<br/>• Modified: inside solar panel<br/>• 12V DC conversion kit<br/>• Bypass mode enabled"]
+        XrayStarlinkIn["📥 Xray Inbound (from Iran VPS)<br/>• VLESS + WebSocket + TLS<br/>• Port 443 (listens on Starlink IP)"]
+        WireGuardOut["🔐 WireGuard Tunnel (to Germany)<br/>• Encrypted UDP tunnel<br/>• Connects to Germany VPS<br/>• Routes all traffic"]
+        RouterStarlink["🔄 Routing Rules<br/>• Inbound from Iran VPS → WireGuard<br/>• Outbound from WireGuard → Internet"]
+    end
+
+    subgraph Control_Plane["🛂 Control & Management"]
+        AuthDB[(Auth Database<br/>• User credentials<br/>• Active sessions)]
+        KeyGen["🔑 Key Generator<br/>• Unique WireGuard keys<br/>• UUIDs for Xray"]
+    end
+
+    subgraph Germany_VPS["🇩🇪 Germany VPS (Hetzner/Contabo)"]
+        direction TB
+        WireGuardIn["🔐 WireGuard Server<br/>• Accepts tunnel from Starlink PC<br/>• Assigns internal IP"]
+        XrayExit["🌍 Xray Outbound (to Internet)<br/>• Freedom protocol<br/>• NAT to internet"]
+        AuthServer["🔑 Auth Server<br/>• User accounts<br/>• One‑connection enforcement<br/>• Issues WireGuard/Xray configs"]
+        RouterGermany["🔄 Routing & NAT<br/>• Forwards traffic to/from Internet"]
+    end
+
+    subgraph Internet["🌐 Global Internet"]
+        Instagram["📸 Instagram/Facebook"]
+        Google["🔍 Google"]
+        Others["📦 Other Services"]
+    end
+
+    AuthDB --> AuthServer
+    KeyGen --> AuthServer
+    AuthClient -->|"1. Login via Xray/Reality"| XrayIn
+    AuthServer -->|"2. Config + Keys"| RouterGermany
+    ClientApp -->|"3. VPN Connection"| XrayIn
+    XrayIn -->|"4. Inspect & Route"| RouterIran
+    RouterIran -->|"5. Proxy traffic"| XrayOut
+    RouterIran -.->|"6. Legit browsing"| Web
+    Web -->|Decoy / HTTPS| Client
+    XrayOut -->|"7. VLESS+WS+TLS Port 443"| XrayStarlinkIn
+    XrayStarlinkIn -->|"8. Decapsulate"| RouterStarlink
+    RouterStarlink -->|"9. All traffic"| WireGuardOut
+    StarlinkDish -->|"10. Raw IP"| RouterStarlink
+    WireGuardOut -->|"11. Encrypted UDP Tunnel"| WireGuardIn
+    WireGuardIn -->|"12. Decrypt & Route"| RouterGermany
+    RouterGermany -->|"13. NAT to Internet"| XrayExit
+    XrayExit -->|"14. HTTP/HTTPS"| Instagram & Google & Others
+`
+  },
+
   everything: {
     id: 'everything',
     title: 'EVERYTHING - Complete System',

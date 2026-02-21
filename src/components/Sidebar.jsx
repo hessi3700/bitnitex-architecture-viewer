@@ -92,53 +92,62 @@ const Sidebar = () => {
   const [diagrams, setDiagrams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
-  // Load diagrams ONLY from database - no hardcoded fallback
-  useEffect(() => {
-    const loadDiagrams = async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        console.log('🔄 Loading diagrams from backend...')
-        // ONLY: Load from database - no fallback
-        const dbDiagrams = await loadAllDiagramsFromBackend()
-        
-        console.log('📊 Received diagrams:', dbDiagrams?.length || 0, 'Type:', typeof dbDiagrams, 'IsArray:', Array.isArray(dbDiagrams))
-        
-        if (dbDiagrams && Array.isArray(dbDiagrams) && dbDiagrams.length > 0) {
-          console.log(`✅ Loaded ${dbDiagrams.length} diagrams from database`)
-          // Ensure unique icons - pass all diagrams so we can check for duplicates
-          const diagramsWithUniqueIcons = dbDiagrams.map((diagram, index) => ({
-            ...diagram,
-            icon: getUniqueIcon(diagram, index, dbDiagrams)
-          }))
-          setDiagrams(diagramsWithUniqueIcons)
-          setError(null) // Clear any previous errors
-        } else {
-          // No diagrams in database - show error, don't load hardcoded
-          console.warn('⚠️ No diagrams found in database (empty array or null)')
-          setError('No diagrams available in database. Diagrams need to be seeded.')
-          setDiagrams([])
-        }
-      } catch (error) {
-        console.error('❌ Error loading diagrams from database:', error)
-        const errorMessage = error.message || 'Unknown error'
-        if (errorMessage.includes('Backend not available') || errorMessage.includes('not configured')) {
-          setError('Backend not available. Please start the backend server on http://localhost:3001')
-        } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('ECONNREFUSED')) {
-          setError('Cannot connect to backend. Is the server running on http://localhost:3001?')
-        } else {
-          setError(`Failed to load diagrams: ${errorMessage.substring(0, 80)}`)
-        }
+  const [seeding, setSeeding] = useState(false)
+
+  const loadDiagrams = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      console.log('🔄 Loading diagrams from backend...')
+      const dbDiagrams = await loadAllDiagramsFromBackend()
+      if (dbDiagrams && Array.isArray(dbDiagrams) && dbDiagrams.length > 0) {
+        console.log(`✅ Loaded ${dbDiagrams.length} diagrams from database`)
+        const diagramsWithUniqueIcons = dbDiagrams.map((diagram, index) => ({
+          ...diagram,
+          icon: getUniqueIcon(diagram, index, dbDiagrams)
+        }))
+        setDiagrams(diagramsWithUniqueIcons)
+        setError(null)
+      } else {
+        console.warn('⚠️ No diagrams found in database (empty array or null)')
+        setError('No diagrams available. Click "Seed database" below.')
         setDiagrams([])
-      } finally {
-        setLoading(false)
       }
+    } catch (err) {
+      console.error('❌ Error loading diagrams from database:', err)
+      const errorMessage = err.message || 'Unknown error'
+      if (errorMessage.includes('Backend not available') || errorMessage.includes('not configured')) {
+        setError('Backend not available. Set VITE_API_URL to your Worker URL and rebuild.')
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('ECONNREFUSED')) {
+        setError('Cannot reach API. Try with VPN or check network.')
+      } else {
+        setError(`Failed: ${errorMessage.substring(0, 80)}`)
+      }
+      setDiagrams([])
+    } finally {
+      setLoading(false)
     }
-    
+  }
+
+  const handleSeedDatabase = async () => {
+    setSeeding(true)
+    try {
+      const { seedDiagramsAndNodes } = await import('../utils/diagramBackend')
+      await seedDiagramsAndNodes()
+      await loadDiagrams()
+      window.dispatchEvent(new CustomEvent('diagram-saved'))
+    } catch (err) {
+      console.error('Seed failed:', err)
+      setError(err.message || 'Seed failed')
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  useEffect(() => {
     loadDiagrams()
   }, [])
-  
+
   const mainViews = diagrams.filter(d => d.type === 'composite' || d.type === 'detail')
 
   return (
@@ -168,15 +177,43 @@ const Sidebar = () => {
             {!sidebarCollapsed && <span className="nav-item-title">Loading...</span>}
           </div>
         ) : error ? (
-          <div className="nav-item" style={{ opacity: 0.7, color: '#ef4444' }}>
-            <span className="nav-item-icon">⚠️</span>
-            {!sidebarCollapsed && <span className="nav-item-title" style={{ fontSize: '12px' }}>{error}</span>}
-          </div>
+          <>
+            <div className="nav-item" style={{ opacity: 0.7, color: '#ef4444' }}>
+              <span className="nav-item-icon">⚠️</span>
+              {!sidebarCollapsed && <span className="nav-item-title" style={{ fontSize: '12px' }}>{error}</span>}
+            </div>
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                className="nav-item seed-db-btn"
+                onClick={handleSeedDatabase}
+                disabled={seeding}
+                title="Seed from this browser"
+              >
+                <span className="nav-item-icon">{seeding ? '⏳' : '🌱'}</span>
+                <span className="nav-item-title">{seeding ? 'Seeding...' : 'Seed database'}</span>
+              </button>
+            )}
+          </>
         ) : mainViews.length === 0 ? (
-          <div className="nav-item" style={{ opacity: 0.7 }}>
-            <span className="nav-item-icon">📭</span>
-            {!sidebarCollapsed && <span className="nav-item-title">No diagrams available</span>}
-          </div>
+          <>
+            <div className="nav-item" style={{ opacity: 0.7 }}>
+              <span className="nav-item-icon">📭</span>
+              {!sidebarCollapsed && <span className="nav-item-title">No diagrams available</span>}
+            </div>
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                className="nav-item seed-db-btn"
+                onClick={handleSeedDatabase}
+                disabled={seeding}
+                title="Seed VPN + exchange diagrams from this browser (no script needed)"
+              >
+                <span className="nav-item-icon">{seeding ? '⏳' : '🌱'}</span>
+                <span className="nav-item-title">{seeding ? 'Seeding...' : 'Seed database (VPN + exchange)'}</span>
+              </button>
+            )}
+          </>
         ) : (
           mainViews.map((diagram, index) => (
           <button

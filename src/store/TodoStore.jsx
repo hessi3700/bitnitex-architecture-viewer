@@ -828,13 +828,14 @@ export const TodoProvider = ({ children }) => {
         const { seedDiagramsAndNodes } = await import('../utils/diagramBackend')
         const { API_ENDPOINTS } = await import('../config/api')
         
-        // Check if any diagrams exist
+        // Check if any diagrams exist and if exchange diagrams (e.g. "everything") are present
         const diagramsResponse = await fetch(API_ENDPOINTS.diagrams)
         if (diagramsResponse.ok) {
           const diagrams = await diagramsResponse.json()
-          // Only seed if no diagrams exist
-          if (!diagrams || diagrams.length === 0) {
-            console.log('🌱 No diagrams found, seeding all diagrams and nodes...')
+          const hasExchange = diagrams?.some(d => d.diagramId === 'everything')
+          const needsSeed = !diagrams || diagrams.length === 0 || !hasExchange
+          if (needsSeed) {
+            console.log('🌱 Seeding diagrams (VPN + exchange)...')
             await seedDiagramsAndNodes()
           } else {
             console.log(`✅ Found ${diagrams.length} existing diagrams, skipping seed`)
@@ -1063,8 +1064,39 @@ export const TodoProvider = ({ children }) => {
         console.log('✅ All tasks already have priorities set in database')
       }
       
+      // If no tasks in DB, seed the 30 Level tasks from step-by-step guides then reload
+      if (uniqueTasks.length === 0) {
+        try {
+          const { stepByStepGuides } = await import('../data/stepByStepGuides')
+          const guides = Object.entries(stepByStepGuides)
+            .filter(([k]) => k.startsWith('Level') && /^Level\d+_/.test(k))
+            .sort((a, b) => (a[1].order || 0) - (b[1].order || 0))
+          const tasksToSeed = guides.map(([nodeId, guide]) => ({
+            nodeId,
+            id: nodeId,
+            title: guide.title || nodeId,
+            description: guide.description || '',
+            status: TaskStatus.NOT_STARTED,
+            priority: TaskPriority.MEDIUM,
+            category: 'Other',
+            notes: [],
+            estimatedHours: 0,
+            actualHours: 0,
+            subtasks: [],
+            dependencies: []
+          }))
+          if (tasksToSeed.length > 0) {
+            console.log('🌱 No tasks in database, seeding', tasksToSeed.length, 'Level tasks...')
+            await seedTasksToBackend(tasksToSeed)
+            await loadTasksFromBackend()
+            return
+          }
+        } catch (seedErr) {
+          console.warn('Could not auto-seed tasks:', seedErr)
+        }
+      }
+
       // All tasks come from database - no hardcoded tasks
-      // If database is empty, tasks need to be seeded via backend seed endpoint
       setTasks(transformedTasks)
     } catch (error) {
       console.error('Failed to load tasks from backend:', error)

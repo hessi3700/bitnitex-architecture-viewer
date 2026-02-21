@@ -11,8 +11,8 @@ const getBasePath = () => {
   
   // For production, try to infer from package.json homepage or use default
   if (process.env.NODE_ENV === 'production') {
-    // Default to '/bitnitex/' but can be overridden via VITE_BASE_PATH
-    return '/bitnitex/'
+    // Default for this repo (GitHub Pages: .../bitnitex-architecture-viewer/)
+    return '/bitnitex-architecture-viewer/'
   }
   
   // Development uses root path

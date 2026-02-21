@@ -12,7 +12,7 @@ const API_BASE = process.env.API_BASE_URL || 'http://localhost:3001'
 const DB_PATH = path.join(__dirname, 'backend', 'bitnitex.db')
 
 const VPN_DIAGRAM = {
-  diagramId: 'everything',
+  diagramId: 'vpn',
   title: 'VPN Architecture (User → Iran VPS → Starlink → Germany → Internet)',
   description: 'User in Iran connects via Reality to Iran VPS, then through Starlink PC to Germany VPS and out to the internet. Auth and key management in control plane.',
   mermaidCode: `%%{init: {'theme': 'dark', 'flowchart': {'curve': 'basis'}}}%%
@@ -156,13 +156,31 @@ async function deleteDbIfRequested() {
   }
 }
 
+function fetchWithTimeout(url, opts, ms = 30000) {
+  const c = new AbortController()
+  const t = setTimeout(() => c.abort(new Error(`Timed out after ${ms / 1000}s`)), ms)
+  return fetch(url, { ...opts, signal: c.signal }).finally(() => clearTimeout(t))
+}
+
 async function seedDiagram() {
   const url = `${API_BASE}/api/diagrams`
-  const res = await fetch(url, {
+  const opts = {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': 'BitniTex-Seed/1.0'
+    },
     body: JSON.stringify(VPN_DIAGRAM)
-  })
+  }
+  console.log('Trying:', url)
+  let res
+  try {
+    res = await fetchWithTimeout(url, opts)
+  } catch (err) {
+    const msg = err.cause?.message || err.message
+    const code = err.cause?.code || err.code
+    throw new Error(`fetch failed: ${msg}${code ? ' (' + code + ')' : ''}`)
+  }
   if (!res.ok) {
     const text = await res.text()
     throw new Error(`POST ${url} failed: ${res.status} ${res.statusText}\n${text}`)
@@ -185,12 +203,33 @@ async function main() {
   }
 
   try {
+    // Quick reachability check
+    const checkUrl = `${API_BASE}/api/diagrams`
+    console.log('Checking Worker at', checkUrl, '...')
+    try {
+      const check = await fetchWithTimeout(checkUrl, {
+        method: 'GET',
+        headers: { 'User-Agent': 'BitniTex-Seed/1.0' }
+      }, 30000)
+      console.log('Worker responded:', check.status)
+    } catch (checkErr) {
+      const msg = checkErr.cause?.message || checkErr.message
+      console.error('Reachability check failed:', msg)
+      if (msg.includes('aborted') || msg.includes('Timed out')) {
+        console.log('   (Request timed out. Try without VPN or increase timeout.)')
+      }
+      console.log('')
+      console.log('If using Cloudflare Worker: try from another network or disable VPN temporarily.')
+      console.log('Then run: API_BASE_URL=https://diagram-api.hessi3700.workers.dev node seed-vpn-diagram.js')
+      process.exit(1)
+    }
     await seedDiagram()
   } catch (e) {
     console.error('❌', e.message)
+    if (e.cause) console.error('   Cause:', e.cause.message || e.cause)
     console.log('')
     console.log('Ensure the backend is running: cd backend && npm run start:dev')
-    console.log('If you just deleted the DB, start the backend first, then run: node seed-vpn-diagram.js')
+    console.log('Or for Cloudflare Worker: API_BASE_URL=https://diagram-api.hessi3700.workers.dev node seed-vpn-diagram.js')
     process.exit(1)
   }
 }
