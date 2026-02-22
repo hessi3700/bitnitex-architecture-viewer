@@ -167,6 +167,7 @@ const Sidebar = () => {
           {!sidebarCollapsed && <div>BitniTex</div>}
         </div>
         {!sidebarCollapsed && <p className="sidebar-subtitle">Architecture Explorer</p>}
+        {!sidebarCollapsed && <p className="sidebar-credit">by HessiKz · Hesam Kazemi</p>}
       </div>
 
       <nav className="nav-section">
@@ -251,6 +252,11 @@ const Sidebar = () => {
               <div className="stat-value">200<span className="stat-unit">+</span></div>
             </div>
           </div>
+        </div>
+      )}
+      {!sidebarCollapsed && (
+        <div className="sidebar-credit-footer">
+          <span className="sidebar-credit-footer-text">© HessiKz · Hesam Kazemi</span>
         </div>
       )}
     </aside>

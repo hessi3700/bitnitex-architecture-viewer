@@ -26,5 +26,6 @@
     "concurrently": "^8.2.2",
     "gh-pages": "^6.3.0",
     "vite": "^5.0.8"
-  }
+  },
+  "author": "Hesam Kazemi (HessiKz)"
 }

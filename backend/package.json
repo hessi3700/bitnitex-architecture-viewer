@@ -14,7 +14,7 @@
     "api",
     "bitnitex"
   ],
-  "author": "",
+  "author": "Hesam Kazemi (HessiKz)",
   "license": "ISC",
   "dependencies": {
     "@nestjs/common": "^11.1.10",
